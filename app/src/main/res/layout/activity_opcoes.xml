@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="2sp"
+    tools:context="gustavo.brilhante.magiccube.activity.OpcoesActivity">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Como Jogar:"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/TextView07"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- Clique na tela e arraste, para girar o cubo por inteiro"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <TextView
+                android:id="@+id/textView3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- Clique nos botões coloridos nas laterais para girar as faces do cubo"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <TextView
+                android:id="@+id/TextView03"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- A cor do botão representa o quadrado que está no centro da face a ser girada"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+
+
+
+
+
+            <TextView
+                android:id="@+id/TextView04"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="- Existem botões nas duas laterais, cada lateral indica o sentido em que a face do cubo girará"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <TextView
+                android:id="@+id/textView4"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Opções:"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <TextView
+                android:id="@+id/TextView05"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- &quot;Embaralhar&quot; indica a quantidade de giros que o cubo sofrerá para ser embaralhado, antes de o jogo iniciar"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+            <TextView
+                android:id="@+id/TextView06"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- &quot;Velocidade&quot; indica a velocidade que o cubo girará quando a tela for tocada e arrastada"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+
+            <TextView
+                android:id="@+id/TextView08"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.18"
+                android:text="- &quot;Tamanho&quot; indica o tamanho do cubo que será exibido na tela"
+                android:textAppearance="?android:attr/textAppearanceMedium"/>
+
+
+
+
+            <LinearLayout
+                android:id="@+id/embaralhamento"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <ImageButton
+                    android:id="@+id/embaralhar_mais"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="embaralhar_mais"
+                    android:src="@drawable/add_icon" />
+                <!--  -->
+                <!--  -->
+
+                <ImageButton
+                    android:id="@+id/embaralhar_menos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="embaralhar_menos"
+                    android:src="@drawable/subtract_icon" />
+
+
+                <TextView
+                    android:id="@+id/textView1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="   Embaralhar   "
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                <TextView
+                    android:id="@+id/embaralhar_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="50"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/LinearLayout01"
+                android:orientation="horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <ImageButton
+                    android:id="@+id/velocidade_mais"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="velocidade_mais"
+                    android:src="@drawable/add_icon" />
+                <!---->
+                <!--  -->
+
+                <ImageButton
+                    android:id="@+id/velocidade_menos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="velocidade_menos"
+                    android:src="@drawable/subtract_icon" />
+
+
+
+                <TextView
+                    android:id="@+id/TextView01"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="   Velocidade   "
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+                <TextView
+                    android:id="@+id/velocidade_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="5"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/LinearLayout02"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" >
+
+                <ImageButton
+                    android:id="@+id/tamanho_mais"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="tamanho_mais"
+                    android:src="@drawable/add_icon" />
+                <!--  -->
+                <!--  -->
+
+                <ImageButton
+                    android:id="@+id/tamanho_menos"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:onClick="tamanho_menos"
+                    android:src="@drawable/subtract_icon" />
+
+
+                <TextView
+                    android:id="@+id/TextView02"
+                    android:layout_width="125dp"
+                    android:layout_height="wrap_content"
+                    android:text="   Tamanho   "
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+
+
+                <TextView
+                    android:id="@+id/tamanho_tv"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="8"
+                    android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
