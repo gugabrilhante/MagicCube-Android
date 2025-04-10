@@ -31,7 +31,6 @@ gradle/wrapper/gradle-wrapper.jar
 .idea/assetWizardSettings.xml
 .idea/deploymentTargetDropDown.xml
 .idea/codeStyles/
-.idea/misc.xml
 
 # Other common files
 *.DS_Store
