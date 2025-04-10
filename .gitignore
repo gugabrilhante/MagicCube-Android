@@ -1,8 +1,37 @@
+# Built application files
+*.apk
+*.ap_
+
+# Files for the ART/Dalvik VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files
+build/
+.gradle/
+captures/
+
+# External native build system files
+.cxx/
+
+# Local configuration files (gradle settings)
+local.properties
+.idea/
 *.iml
-.gradle
-/local.properties
-/.idea/workspace.xml
-/.idea/libraries
-.DS_Store
-/build
-/captures
+
+# Gradle wrapper files
+gradle/wrapper/gradle-wrapper.jar
+
+# Local configuration files (IDE settings)
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/gradle.xml
+.idea/assetWizardSettings.xml
+.idea/deploymentTargetDropDown.xml
+.idea/codeStyles/
+.idea/misc.xml
+
+# Other common files
+*.DS_Store
