@@ -41,7 +41,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.43"
-                    android:onClick="Iniciar"
+                    android:onClick="start"
                     android:src="@drawable/start" />
 
             </LinearLayout>
@@ -58,7 +58,7 @@
                     android:id="@+id/imageButton2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:onClick="Opcoes"
+                    android:onClick="options"
                     android:src="@drawable/options" />
 
             </LinearLayout>
@@ -75,7 +75,7 @@
                     android:id="@+id/imageButton3"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:onClick="Sair"
+                    android:onClick="exit"
                     android:src="@drawable/quit" />
 
                 <!-- onclick -->

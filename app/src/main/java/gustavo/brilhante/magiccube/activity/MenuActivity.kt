@@ -1,31 +1,29 @@
-package gustavo.brilhante.magiccube.activity;
+package gustavo.brilhante.magiccube.activity
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.View;
+import android.content.Intent
+import android.os.Bundle
+import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import gustavo.brilhante.magiccube.R
+import gustavo.brilhante.magiccube.activity.MagicCubeActivity
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import gustavo.brilhante.magiccube.R;
-
-public class MenuActivity extends AppCompatActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+class MenuActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
     }
 
-    public void Iniciar(View v){
-        Intent i = new Intent(this, MagicCubeActivity.class);
-        startActivity(i);
-    }
-    public void Opcoes(View v){
-        Intent i = new Intent(this, OpcoesActivity.class);
-        startActivity(i);
+    fun start(v: View?) {
+        val i = Intent(this, MagicCubeActivity::class.java)
+        startActivity(i)
     }
 
-    public void Sair(View v){
-        finish();
+    fun options(v: View?) {
+        val i = Intent(this, OptionsActivity::class.java)
+        startActivity(i)
+    }
+
+    fun exit(v: View?) {
+        finish()
     }
 }

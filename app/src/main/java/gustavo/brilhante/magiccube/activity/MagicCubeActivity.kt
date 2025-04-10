@@ -1,327 +1,286 @@
-package gustavo.brilhante.magiccube.activity;
+package gustavo.brilhante.magiccube.activity
 
-import android.opengl.GLSurfaceView;
-import android.os.Bundle;
-import android.util.TypedValue;
-import android.view.Display;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.LinearLayout;
+import android.opengl.GLSurfaceView
+import android.os.Bundle
+import android.util.TypedValue
+import android.view.MotionEvent
+import android.view.ViewGroup
+import android.view.WindowManager
+import android.widget.Button
+import android.widget.LinearLayout
+import androidx.appcompat.app.AppCompatActivity
+import gustavo.brilhante.magiccube.R
+import gustavo.brilhante.magiccube.grafic.CubeRenderer
 
-import androidx.appcompat.app.AppCompatActivity;
+class MagicCubeActivity : AppCompatActivity() {
+    var mRenderer: CubeRenderer? = null
+    private var mPreviousX = 0f
+    private var mPreviousY = 0f
+    private val TOUCH_SCALE_FACTOR = OptionsActivity.speed * ((180.0f / 320) / 5)
+    var view: GLSurfaceView? = null
+    var displayWidth: Int = 0
+    var displayHeight: Int = 0
+    var actionBarHeight: Int = 0
+    var buttonSize: Int = 0
 
-import gustavo.brilhante.magiccube.R;
-import gustavo.brilhante.magiccube.grafic.CubeRenderer;
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_FULLSCREEN,
+            WindowManager.LayoutParams.FLAG_FULLSCREEN
+        )
 
-public class MagicCubeActivity extends AppCompatActivity {
+        view = GLSurfaceView(this)
 
-    CubeRenderer mRenderer;
-    private float mPreviousX = 0;
-    private float mPreviousY = 0;
-    private final float TOUCH_SCALE_FACTOR = OpcoesActivity.velocidade*((180.0f / 320)/5);
-    GLSurfaceView view ;
-    public static Boolean ativar = false;
-    public static Boolean zoom = false;
-    public static Boolean zoomOut = false;
+        mRenderer = CubeRenderer(true)
 
-    int displayWidth, displayHeight,actionBarHeight, buttonSize;
+        view!!.setRenderer(mRenderer)
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        setContentView(view)
 
-        view = new GLSurfaceView(this);
+        val display = windowManager.defaultDisplay
+        displayWidth = display.width
+        displayHeight = display.height
+        buttonSize = displayWidth / 6
 
-        mRenderer = new CubeRenderer(true);
-
-        view.setRenderer(mRenderer);
-
-        setContentView(view);
-
-        Display display = getWindowManager().getDefaultDisplay();
-        displayWidth = display.getWidth();
-        displayHeight = display.getHeight();
-        buttonSize = displayWidth/6;
-
-        TypedValue tv = new TypedValue();
-        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
-            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+        val tv = TypedValue()
+        if (theme.resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            actionBarHeight = TypedValue.complexToDimensionPixelSize(tv.data, resources.displayMetrics)
         }
 
         //criaÁ„o de botoes.
+        val ll2 = LinearLayout(this)
+        ll2.orientation = LinearLayout.HORIZONTAL
+        ll2.translationX = 0f
 
-        LinearLayout ll2 = new LinearLayout(this);
-        ll2.setOrientation(LinearLayout.HORIZONTAL);
-        ll2.setTranslationX(0);
+        val b_yellow = Button(this)
+        //      b_yellow.setText("yellow");
+        b_yellow.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_yellow3))
+        b_yellow.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        Button b_yellow = new Button(this);
-//      b_yellow.setText("yellow");
-        b_yellow.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_yellow3));
-        b_yellow.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
-
-        b_yellow.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 0;
-                    CubeRenderer.sense = -1;
-                }
+        b_yellow.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 0
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_yellow);
+        ll2.addView(b_yellow)
 
-        Button b_red = new Button(this);
+        val b_red = Button(this)
         //b_red.setText("red");
-        b_red.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_red3));
-        b_red.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b_red.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_red3))
+        b_red.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b_red.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 5;
-                    CubeRenderer.sense = -1;
-                }
+        b_red.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 5
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_red);
+        ll2.addView(b_red)
 
-        Button b_blue = new Button(this);
+        val b_blue = Button(this)
         //b_blue.setText("blue");
-        b_blue.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_blue3));
-        b_blue.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b_blue.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_blue3))
+        b_blue.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b_blue.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 3;
-                    CubeRenderer.sense = -1;
-                }
+        b_blue.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 3
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_blue);
+        ll2.addView(b_blue)
 
-        Button b_green = new Button(this);
+        val b_green = Button(this)
         // b_green.setText("green");
-        b_green.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_green3));
-        b_green.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b_green.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_green3))
+        b_green.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b_green.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 2;
-                    CubeRenderer.sense = -1;
-                }
+        b_green.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 2
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_green);
+        ll2.addView(b_green)
 
-        Button b_orange = new Button(this);
+        val b_orange = Button(this)
         //b_orange.setText("orange");
-        b_orange.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_orange3));
-        b_orange.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b_orange.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_orange3))
+        b_orange.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b_orange.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 4;
-                    CubeRenderer.sense = -1;
-                }
+        b_orange.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 4
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_orange);
+        ll2.addView(b_orange)
 
-        Button b_white = new Button(this);
+        val b_white = Button(this)
         //b_white.setText("white");
-        b_white.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_white3));
-        b_white.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b_white.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_white3))
+        b_white.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b_white.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 1;
-                    CubeRenderer.sense = -1;
-                }
+        b_white.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 1
+                CubeRenderer.sense = -1
             }
-        });
+        }
 
-        ll2.addView(b_white);
+        ll2.addView(b_white)
 
-        this.addContentView(ll2, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        this.addContentView(ll2, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
 
-        LinearLayout ll = new LinearLayout(this);
-        ll.setOrientation(LinearLayout.HORIZONTAL);
-        ll.setTranslationY(displayHeight - actionBarHeight - buttonSize);
-        ll.setTranslationX(0);
+        val ll = LinearLayout(this)
+        ll.orientation = LinearLayout.HORIZONTAL
+        ll.translationY = (displayHeight - actionBarHeight - buttonSize).toFloat()
+        ll.translationX = 0f
 
-        Button b2_yellow = new Button(this);
+        val b2_yellow = Button(this)
         // b2_yellow.setText("yellow");
-        b2_yellow.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_yellow3));
-        b2_yellow.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_yellow.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_yellow3))
+        b2_yellow.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_yellow.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 0;
-                    CubeRenderer.sense = 1;
-                }
+        b2_yellow.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 0
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_yellow);
+        ll.addView(b2_yellow)
 
-        Button b2_red = new Button(this);
+        val b2_red = Button(this)
         //b2_red.setText("red");
-        b2_red.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_red3));
-        b2_red.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_red.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_red3))
+        b2_red.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_red.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 5;
-                    CubeRenderer.sense = 1;
-                }
+        b2_red.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 5
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_red);
+        ll.addView(b2_red)
 
-        Button b2_blue = new Button(this);
+        val b2_blue = Button(this)
         //b2_blue.setText("blue");
-        b2_blue.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_blue3));
-        b2_blue.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_blue.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_blue3))
+        b2_blue.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_blue.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 3;
-                    CubeRenderer.sense = 1;
-                }
+        b2_blue.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 3
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_blue);
+        ll.addView(b2_blue)
 
-        Button b2_green = new Button(this);
+        val b2_green = Button(this)
         //b2_green.setText("green");
-        b2_green.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_green3));
-        b2_green.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_green.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_green3))
+        b2_green.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_green.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 2;
-                    CubeRenderer.sense = 1;
-                }
+        b2_green.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 2
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_green);
+        ll.addView(b2_green)
 
-        Button b2_orange = new Button(this);
+        val b2_orange = Button(this)
         //b2_orange.setText("orange");
-        b2_orange.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_orange3));
-        b2_orange.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_orange.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_orange3))
+        b2_orange.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_orange.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 4;
-                    CubeRenderer.sense = 1;
-                }
+        b2_orange.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 4
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_orange);
+        ll.addView(b2_orange)
 
-        Button b2_white = new Button(this);
+        val b2_white = Button(this)
         //b2_white.setText("white");
-        b2_white.setBackgroundDrawable(getResources().getDrawable(R.drawable.btn_white3));
-        b2_white.setLayoutParams(new ViewGroup.LayoutParams(buttonSize, buttonSize));
+        b2_white.setBackgroundDrawable(resources.getDrawable(R.drawable.btn_white3))
+        b2_white.layoutParams = ViewGroup.LayoutParams(buttonSize, buttonSize)
 
-        b2_white.setOnClickListener(new View.OnClickListener() {
-
-            public void onClick(View arg0) {
-                if(CubeRenderer.rotating == false){
-                    CubeRenderer.rotating = true;
-                    CubeRenderer.rot = 1;
-                    CubeRenderer.sense = 1;
-                }
+        b2_white.setOnClickListener {
+            if (CubeRenderer.rotating == false) {
+                CubeRenderer.rotating = true
+                CubeRenderer.rot = 1
+                CubeRenderer.sense = 1
             }
-        });
+        }
 
-        ll.addView(b2_white);
+        ll.addView(b2_white)
 
 
-        this.addContentView(ll, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
+        this.addContentView(ll, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
-    @Override
-    public boolean onTouchEvent(MotionEvent e) {
-        float x = e.getX();
-        float y = e.getY();
+    override fun onTouchEvent(e: MotionEvent): Boolean {
+        val x = e.x
+        val y = e.y
 
-        if(e.getAction() == MotionEvent.ACTION_DOWN){
+        if (e.action == MotionEvent.ACTION_DOWN) {
             //Log.d("DOWN","TESTE");
-
         }
-        if(e.getAction() == MotionEvent.ACTION_UP){
+        if (e.action == MotionEvent.ACTION_UP) {
             //Log.d("UP","TESTE");
-            ativar = true;
+            isActivated = true
         }
-        if(e.getAction()==MotionEvent.ACTION_POINTER_UP){
-            zoom = false;
+        if (e.action == MotionEvent.ACTION_POINTER_UP) {
+            zoom = false
         }
-        if(e.getAction() == MotionEvent.ACTION_POINTER_DOWN){
-            zoom = true;
+        if (e.action == MotionEvent.ACTION_POINTER_DOWN) {
+            zoom = true
         }
-        if(e.getAction() == MotionEvent.ACTION_MOVE){
-                float dx = x - mPreviousX;
-                float dy = y - mPreviousY;
+        if (e.action == MotionEvent.ACTION_MOVE) {
+            val dx = x - mPreviousX
+            val dy = y - mPreviousY
 
-                mRenderer.angleTestAux = mRenderer.angleTest;
-                mRenderer.angleTest2Aux = mRenderer.angleTest2;
-                mRenderer.angleTest += dx * TOUCH_SCALE_FACTOR;
-                mRenderer.angleTest2 += dy * TOUCH_SCALE_FACTOR;
-
+            mRenderer!!.angleTestAux = mRenderer!!.angleTest
+            mRenderer!!.angleTest2Aux = mRenderer!!.angleTest2
+            mRenderer!!.angleTest += dx * TOUCH_SCALE_FACTOR
+            mRenderer!!.angleTest2 += dy * TOUCH_SCALE_FACTOR
         }
 
-        mPreviousX = x;
-        mPreviousY = y;
+        mPreviousX = x
+        mPreviousY = y
 
-        return true;
-
+        return true
     }
 
+    companion object {
+        @JvmField
+        var isActivated: Boolean = false
+        var zoom: Boolean = false
+        var zoomOut: Boolean = false
+    }
 }
