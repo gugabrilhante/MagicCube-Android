@@ -2,7 +2,6 @@ package gustavo.brilhante.magiccube.activity;
 
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.TypedValue;
 import android.view.Display;
 import android.view.MotionEvent;
@@ -11,6 +10,8 @@ import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import gustavo.brilhante.magiccube.R;
 import gustavo.brilhante.magiccube.grafic.CubeRenderer;
