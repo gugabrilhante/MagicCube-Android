@@ -24,6 +24,7 @@
             android:id="@+id/linearLayout1"
             android:layout_width="match_parent"
             android:layout_height="98dp"
+            android:layout_marginBottom="40dp"
             android:layout_gravity="bottom" >
 
 
@@ -41,6 +42,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.43"
+                    android:scaleType="centerInside"
                     android:onClick="start"
                     android:src="@drawable/start" />
 
@@ -58,6 +60,7 @@
                     android:id="@+id/imageButton2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:scaleType="centerInside"
                     android:onClick="options"
                     android:src="@drawable/options" />
 
@@ -75,6 +78,7 @@
                     android:id="@+id/imageButton3"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
+                    android:scaleType="centerInside"
                     android:onClick="exit"
                     android:src="@drawable/quit" />
 

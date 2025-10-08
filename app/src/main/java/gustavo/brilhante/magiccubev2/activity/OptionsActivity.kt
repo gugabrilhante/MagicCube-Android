@@ -1,10 +1,10 @@
-package gustavo.brilhante.magiccube.activity
+package gustavo.brilhante.magiccubev2.activity
 
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import gustavo.brilhante.magiccube.R
+import gustavo.brilhante.magiccubev2.R
 
 class OptionsActivity : AppCompatActivity() {
     var shuffleTextView: TextView? = null

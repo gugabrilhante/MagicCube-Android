@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccube.activity
+package gustavo.brilhante.magiccubev2.activity
 
 import android.opengl.GLSurfaceView
 import android.os.Bundle
@@ -9,8 +9,8 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import gustavo.brilhante.magiccube.R
-import gustavo.brilhante.magiccube.grafic.CubeRenderer
+import gustavo.brilhante.magiccubev2.R
+import gustavo.brilhante.magiccubev2.grafic.CubeRenderer
 
 class MagicCubeActivity : AppCompatActivity() {
     var mRenderer: CubeRenderer? = null
@@ -51,6 +51,7 @@ class MagicCubeActivity : AppCompatActivity() {
         //criaÁ„o de botoes.
         val ll2 = LinearLayout(this)
         ll2.orientation = LinearLayout.HORIZONTAL
+        ll2.translationY = (actionBarHeight - buttonSize/3).toFloat()
         ll2.translationX = 0f
 
         val b_yellow = Button(this)
@@ -147,7 +148,7 @@ class MagicCubeActivity : AppCompatActivity() {
 
         val ll = LinearLayout(this)
         ll.orientation = LinearLayout.HORIZONTAL
-        ll.translationY = (displayHeight - actionBarHeight - buttonSize).toFloat()
+        ll.translationY = (displayHeight - actionBarHeight - 2 * buttonSize).toFloat()
         ll.translationX = 0f
 
         val b2_yellow = Button(this)
@@ -240,7 +241,6 @@ class MagicCubeActivity : AppCompatActivity() {
 
         ll.addView(b2_white)
 
-
         this.addContentView(ll, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
@@ -284,3 +284,4 @@ class MagicCubeActivity : AppCompatActivity() {
         var zoomOut: Boolean = false
     }
 }
+

@@ -3,7 +3,7 @@ apply plugin: 'org.jetbrains.kotlin.android'
 
 android {
     compileSdkVersion 35
-    namespace = "gustavo.brilhante.magiccube"
+    namespace = "gustavo.brilhante.magiccubev2"
 
     defaultConfig {
         applicationId "gustavo.brilhante.magiccube"
