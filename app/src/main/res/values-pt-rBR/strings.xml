@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cubo Mágico</string>
+    <string name="como_jogar">Como Jogar:</string>
+    <string name="clique_na_tela_e_arraste_para_girar_o_cubo_por_inteiro">- Clique na tela e arraste, para girar o cubo por inteiro</string>
+    <string name="clique_nos_bot_es_coloridos_nas_laterais_para_girar_as_faces_do_cubo">- Clique nos botões coloridos nas laterais para girar as faces do cubo</string>
+    <string name="a_cor_do_bot_o_representa_o_quadrado_que_est_no_centro_da_face_a_ser_girada">- A cor do botão representa o quadrado que está no centro da face a ser girada</string>
+    <string name="existem_bot_es_nas_duas_laterais_cada_lateral_indica_o_sentido_em_que_a_face_do_cubo_girar">- Existem botões nas duas laterais, cada lateral indica o sentido em que a face do cubo girará</string>
+    <string name="op_es">Opções:</string>
+    <string name="quot_embaralhar_quot_indica_a_quantidade_de_giros_que_o_cubo_sofrer_para_ser_embaralhado_antes_de_o_jogo_iniciar">- \"Embaralhar\" indica a quantidade de giros que o cubo sofrerá para ser embaralhado, antes de o jogo iniciar</string>
+    <string name="quot_velocidade_quot_indica_a_velocidade_que_o_cubo_girar_quando_a_tela_for_tocada_e_arrastada">- \"Velocidade\" indica a velocidade que o cubo girará quando a tela for tocada e arrastada</string>
+    <string name="quot_tamanho_quot_indica_o_tamanho_do_cubo_que_ser_exibido_na_tela">- \"Tamanho\" indica o tamanho do cubo que será exibido na tela</string>
+    <string name="embaralhar">Embaralhar</string>
+    <string name="velocidade">Velocidade</string>
+    <string name="tamanho">Tamanho</string>
+</resources>

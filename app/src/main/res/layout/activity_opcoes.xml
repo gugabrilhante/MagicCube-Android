@@ -18,61 +18,56 @@
                 android:id="@+id/textView2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Como Jogar:"
+                android:text="@string/como_jogar"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
 
             <TextView
                 android:id="@+id/TextView07"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="- Clique na tela e arraste, para girar o cubo por inteiro"
+                android:text="@string/clique_na_tela_e_arraste_para_girar_o_cubo_por_inteiro"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
             <TextView
                 android:id="@+id/textView3"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="- Clique nos botões coloridos nas laterais para girar as faces do cubo"
+                android:text="@string/clique_nos_bot_es_coloridos_nas_laterais_para_girar_as_faces_do_cubo"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
             <TextView
                 android:id="@+id/TextView03"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="- A cor do botão representa o quadrado que está no centro da face a ser girada"
+                android:text="@string/a_cor_do_bot_o_representa_o_quadrado_que_est_no_centro_da_face_a_ser_girada"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
-
-
-
-
-
 
             <TextView
                 android:id="@+id/TextView04"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="- Existem botões nas duas laterais, cada lateral indica o sentido em que a face do cubo girará"
+                android:text="@string/existem_bot_es_nas_duas_laterais_cada_lateral_indica_o_sentido_em_que_a_face_do_cubo_girar"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
             <TextView
                 android:id="@+id/textView4"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Opções:"
+                android:text="@string/op_es"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
 
             <TextView
                 android:id="@+id/TextView05"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="- &quot;Embaralhar&quot; indica a quantidade de giros que o cubo sofrerá para ser embaralhado, antes de o jogo iniciar"
+                android:text="@string/quot_embaralhar_quot_indica_a_quantidade_de_giros_que_o_cubo_sofrer_para_ser_embaralhado_antes_de_o_jogo_iniciar"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
             <TextView
                 android:id="@+id/TextView06"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="- &quot;Velocidade&quot; indica a velocidade que o cubo girará quando a tela for tocada e arrastada"
+                android:text="@string/quot_velocidade_quot_indica_a_velocidade_que_o_cubo_girar_quando_a_tela_for_tocada_e_arrastada"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 
@@ -81,7 +76,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.18"
-                android:text="- &quot;Tamanho&quot; indica o tamanho do cubo que será exibido na tela"
+                android:text="@string/quot_tamanho_quot_indica_o_tamanho_do_cubo_que_ser_exibido_na_tela"
                 android:textAppearance="?android:attr/textAppearanceMedium"/>
 
 
@@ -96,7 +91,7 @@
                     android:id="@+id/embaralhar_mais"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="embaralhar_mais"
+                    android:onClick="increaseShuffle"
                     android:src="@drawable/add_icon" />
                 <!--  -->
                 <!--  -->
@@ -105,7 +100,7 @@
                     android:id="@+id/embaralhar_menos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="embaralhar_menos"
+                    android:onClick="decreaseShuffle"
                     android:src="@drawable/subtract_icon" />
 
 
@@ -113,7 +108,7 @@
                     android:id="@+id/textView1"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="   Embaralhar   "
+                    android:text="@string/embaralhar"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <TextView
@@ -135,7 +130,7 @@
                     android:id="@+id/velocidade_mais"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="velocidade_mais"
+                    android:onClick="increaseSpeed"
                     android:src="@drawable/add_icon" />
                 <!---->
                 <!--  -->
@@ -144,7 +139,7 @@
                     android:id="@+id/velocidade_menos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="velocidade_menos"
+                    android:onClick="decreaseSpeed"
                     android:src="@drawable/subtract_icon" />
 
 
@@ -153,7 +148,7 @@
                     android:id="@+id/TextView01"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="   Velocidade   "
+                    android:text="@string/velocidade"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
                 <TextView
@@ -174,7 +169,7 @@
                     android:id="@+id/tamanho_mais"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="tamanho_mais"
+                    android:onClick="increaseSize"
                     android:src="@drawable/add_icon" />
                 <!--  -->
                 <!--  -->
@@ -183,7 +178,7 @@
                     android:id="@+id/tamanho_menos"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:onClick="tamanho_menos"
+                    android:onClick="decreaseSize"
                     android:src="@drawable/subtract_icon" />
 
 
@@ -191,7 +186,7 @@
                     android:id="@+id/TextView02"
                     android:layout_width="125dp"
                     android:layout_height="wrap_content"
-                    android:text="   Tamanho   "
+                    android:text="@string/tamanho"
                     android:textAppearance="?android:attr/textAppearanceLarge" />
 
 
