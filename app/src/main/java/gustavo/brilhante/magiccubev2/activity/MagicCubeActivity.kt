@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccubev2.activity
 
+import android.content.res.Resources
 import android.opengl.GLSurfaceView
 import android.os.Bundle
 import android.util.Log
@@ -249,12 +250,25 @@ class MagicCubeActivity : AppCompatActivity() {
     private var startX = 0f
     private var startY = 0f
     private var startTime = 0L
+    private var horizontalOrientation = 1
+    private var verticalOrientation = 1
 
     override fun onTouchEvent(e: MotionEvent): Boolean {
         val x = e.x
         val y = e.y
 
+
+
         if (e.action == MotionEvent.ACTION_DOWN) {
+            val screenHeight = Resources.getSystem().displayMetrics.heightPixels
+            val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+
+            val top = y < screenHeight / 2
+            val right = x > screenWidth / 2
+
+            verticalOrientation = if (right) 1 else -1
+            horizontalOrientation = if (top) -1 else 1
+
             //Log.d("DOWN","TESTE");
             startX = x
             startY = y
@@ -272,10 +286,10 @@ class MagicCubeActivity : AppCompatActivity() {
             isActivated = true
 
             when(getMovementType(dt, dx, dy)){
-                MovementType.SWIPE_UP -> startRotationOfClosestSide(-1)
-                MovementType.SWIPE_DOWN -> startRotationOfClosestSide(1)
-                MovementType.SWIPE_LEFT -> startRotationOfClosestSide(1)
-                MovementType.SWIPE_RIGHT -> startRotationOfClosestSide(-1)
+                MovementType.SWIPE_UP -> startRotationOfClosestSide(-1 * verticalOrientation)
+                MovementType.SWIPE_DOWN -> startRotationOfClosestSide(1 * verticalOrientation)
+                MovementType.SWIPE_LEFT -> startRotationOfClosestSide(1 * horizontalOrientation)
+                MovementType.SWIPE_RIGHT -> startRotationOfClosestSide(-1 * horizontalOrientation)
                 MovementType.DRAG -> {}
                 MovementType.NONE -> {}
             }
@@ -364,7 +378,7 @@ class MagicCubeActivity : AppCompatActivity() {
     }
 }
 
-internal enum class MovementType {
+internal enum class MovementType() {
     SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT, DRAG, NONE
 }
 

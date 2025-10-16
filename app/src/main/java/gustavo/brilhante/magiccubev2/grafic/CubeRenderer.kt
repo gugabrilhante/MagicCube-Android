@@ -325,7 +325,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         val indexMin = cubeSide.withIndex().minByOrNull { it.value }?.index ?: -1
         if (indexMin >= 0) {
             rot = cubeSideIndex[indexMin].second.rotation ?: 20
-            sense = rotationSense
+            sense = rotationSense * cubeSideIndex[indexMin].second.orientation
         }
     }
 

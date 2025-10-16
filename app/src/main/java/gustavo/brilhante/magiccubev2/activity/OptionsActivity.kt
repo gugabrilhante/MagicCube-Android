@@ -63,7 +63,7 @@ class OptionsActivity : AppCompatActivity() {
 
     companion object {
         @JvmField
-        var shuffle: Int = 5
+        var shuffle: Int = 3
         var speed: Int = 5
         var size: Int = 9
     }
