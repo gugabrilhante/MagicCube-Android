@@ -1,23 +1,24 @@
 package gustavo.brilhante.magiccubev2.grafic
 
 import android.opengl.GLSurfaceView
+import android.util.Log
 import gustavo.brilhante.magiccubev2.activity.MagicCubeActivity
 import gustavo.brilhante.magiccubev2.activity.OptionsActivity
 import javax.microedition.khronos.opengles.GL10
 
 class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.Renderer {
     var fielOfView: Float = 0f
-    var angleTest: Float = 0f
+    var angleRotateX: Float = 0f
     var speedY: Float = 0.1.toFloat()
-    var angleTest2: Float = 0f
+    var angleRotateY: Float = 0f
     var speedX: Float = 0.1.toFloat()
     var inc: Float = 5f
-    var angleTestAux: Float = 0f
-    var angleTest2Aux: Float = 0f
+    var angleRotateXAux: Float = 0f
+    var angleRotateYAux: Float = 0f
     var tamanhoCubo: Int = 0
 
     //public final static int SS_SUNLIGHT = GL10.GL_LIGHT0;
-    private var Angle = 0f
+    private var rotatedAngle = 0f
     private var soma = 0f
     private val dist = 2.12.toFloat()
     private var xdist = 0f
@@ -26,7 +27,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
 
 
     var e: Int = 0
-    var k: Int = 0
+    var cubeMatrixIndex: Int = 0
     var sinal: Int = 1
     var aux1: Int = 0
     var aux2: Int = 0
@@ -41,6 +42,15 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     var pos: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
     var pos_init: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
     var face_color: Array<IntArray?> = arrayOfNulls(6)
+    var cubeSide: FloatArray = FloatArray(6)
+    var cubeSideIndex: List<Pair<Int, CubeSide>> = listOf(
+        Pair(4, CubeSide.YELLOW), //yellow
+        Pair(10, CubeSide.GREEN), //green
+        Pair(12, CubeSide.ORANGE), //orange
+        Pair(14, CubeSide.RED),
+        Pair(16, CubeSide.BLUE), //blue
+        Pair(22, CubeSide.WHITE)  //white
+    )
     var eixoy: IntArray = intArrayOf(0, 1, 2, 3)
     var eixoz: IntArray = intArrayOf(1, 5, 3, 4)
     var eixox: IntArray = intArrayOf(0, 4, 2, 5)
@@ -53,42 +63,44 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     var cubeList: java.util.ArrayList<Cube> = java.util.ArrayList()
     var cubeList2: java.util.ArrayList<Cube> = java.util.ArrayList()
 
+    private val matrixTracker = MatrixTracker()
+
     init {
-        cubeList.add(Cube('K', 'Y', 'K', 'G', 'O', 'K'))
-        cubeList.add(Cube('K', 'Y', 'K', 'G', 'K', 'K'))
-        cubeList.add(Cube('K', 'Y', 'R', 'G', 'K', 'K'))
+        cubeList.add(Cube('K', 'Y', 'K', 'G', 'O', 'K')) //0
+        cubeList.add(Cube('K', 'Y', 'K', 'G', 'K', 'K')) //1
+        cubeList.add(Cube('K', 'Y', 'R', 'G', 'K', 'K')) //2
 
-        cubeList.add(Cube('K', 'Y', 'K', 'K', 'O', 'K'))
-        cubeList.add(Cube('K', 'Y', 'K', 'K', 'K', 'K'))
-        cubeList.add(Cube('K', 'Y', 'R', 'K', 'K', 'K'))
+        cubeList.add(Cube('K', 'Y', 'K', 'K', 'O', 'K')) //3
+        cubeList.add(Cube('K', 'Y', 'K', 'K', 'K', 'K')) //4 middle yellow
+        cubeList.add(Cube('K', 'Y', 'R', 'K', 'K', 'K')) //5
 
-        cubeList.add(Cube('B', 'Y', 'K', 'K', 'O', 'K'))
-        cubeList.add(Cube('B', 'Y', 'K', 'K', 'K', 'K'))
-        cubeList.add(Cube('B', 'Y', 'R', 'K', 'K', 'K'))
+        cubeList.add(Cube('B', 'Y', 'K', 'K', 'O', 'K')) //6
+        cubeList.add(Cube('B', 'Y', 'K', 'K', 'K', 'K')) //7
+        cubeList.add(Cube('B', 'Y', 'R', 'K', 'K', 'K')) //8
 
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'K'))
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'K'))
-        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'K'))
+        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'K')) //9
+        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'K')) //10 middle green
+        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'K')) //11
 
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'K'))
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'K'))
-        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'K'))
+        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'K')) //12 middle orange
+        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'K')) //13
+        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'K')) //14 middle red
 
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'K'))
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'K'))
-        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'K'))
+        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'K')) //15
+        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'K')) //16 middle blue
+        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'K')) //17
 
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'W'))
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'W'))
-        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'W'))
+        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'W')) //18
+        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'W')) //19
+        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'W')) //20
 
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'W'))
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'W'))
-        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'W'))
+        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'W')) //21
+        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'W')) //22 middle white
+        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'W')) //23
 
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'W'))
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'W'))
-        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'W'))
+        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'W')) //24
+        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'W')) //25
+        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'W')) //26
 
         for (j in 0..26) {
             //cubeList.add(new Cube());
@@ -124,7 +136,6 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         if (face == 5) return cubeList[cubo].getup()
         return 0.toChar()
     }
-
 
     fun SaveRot(cubo: Int) {
         var cor1: Char
@@ -310,6 +321,14 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         //	
     }
 
+    fun rotateClosestSideToScreen(rotationSense: Int = 1) {
+        val indexMin = cubeSide.withIndex().minByOrNull { it.value }?.index ?: -1
+        if (indexMin >= 0) {
+            rot = cubeSideIndex[indexMin].second.rotation ?: 20
+            sense = rotationSense
+        }
+    }
+
     fun verificar() {
         for (k in 0..5) {
             for (i in 0..2) {
@@ -330,9 +349,11 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         gl.glMatrixMode(GL10.GL_MODELVIEW)
         gl.glLoadIdentity()
 
+        matrixTracker.reset()
+
         tamanhoCubo = -20 + OptionsActivity.size //MODIFICADO!
 
-        gl.glTranslatef(0.0f, 0.0f, tamanhoCubo.toFloat())
+        gl.translate(0.0f, 0.0f, tamanhoCubo.toFloat())
 
         xdist = 0f
         ydist = 0f
@@ -340,16 +361,16 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
 
         android.util.Log.d("TESTE", "TESTE")
 
-        if (Angle >= 0 && sense == -1) {
-            Angle *= -1f
+        if (rotatedAngle >= 0 && sense == -1) {
+            rotatedAngle *= -1f
         }
 
         if (MagicCubeActivity.isActivated) {
-            if (angleTest - angleTestAux < -2) angleTest -= inc
-            if (angleTest - angleTestAux > 2) angleTest += inc
+            if (angleRotateX - angleRotateXAux < -2) angleRotateX -= inc
+            if (angleRotateX - angleRotateXAux > 2) angleRotateX += inc
 
-            if (angleTest2 - angleTest2Aux < -2) angleTest2 -= inc
-            if (angleTest2 - angleTest2Aux > 2) angleTest2 += inc
+            if (angleRotateY - angleRotateYAux < -2) angleRotateY -= inc
+            if (angleRotateY - angleRotateYAux > 2) angleRotateY += inc
 
             inc -= 0.1.toFloat()
 
@@ -359,147 +380,158 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
                 inc = 5f
             }
         }
-        gl.glRotatef(angleTest, 0f, 1f, 0f)
-        gl.glRotatef(angleTest2, 1f, 0f, 0f)
+        gl.rotate(angleRotateX, 0f, 1f, 0f)
+        gl.rotate(angleRotateY, 1f, 0f, 0f)
 
         if (sinal < 0) sinal = -sinal
-        k = 0
+        cubeMatrixIndex = 0
         n = 0
+        if (MagicCubeActivity.isActivated) Log.d("ZDist", " ")
         while (n < 3) {
             if (rot == 0 && n == 0) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
                 e = 0
             }
             if (rot == 6 && n == 1) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
                 e = 1
             }
             if (rot == 1 && n == 2) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
                 e = 2
             }
-            gl.glTranslatef(0.0f, sinal * dist, 0.0f)
+            gl.translate(0.0f, sinal * dist, 0.0f)
             ydist += sinal * dist
             if (n > 0) {
-                gl.glTranslatef(-dist, 0.0f, -dist)
+                gl.translate(-dist, 0.0f, -dist)
                 xdist += -dist
                 zdist += -dist
             }
-            gl.glTranslatef(0.0f, 0.0f, -2 * dist)
-            gl.glTranslatef(dist, 0.0f, 0.0f)
+            gl.translate(0.0f, 0.0f, -2 * dist)
+            gl.translate(dist, 0.0f, 0.0f)
             zdist += -2 * dist
             xdist += dist
             i = 0
             while (i < 3) {
                 if (rot == 2 && i == 0) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                     e = 0
                 }
                 if (rot == 7 && i == 1) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                     e = 1
                 }
                 if (rot == 3 && i == 2) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                     e = 2
                 }
-                gl.glTranslatef(0.0f, 0.0f, dist)
+                gl.translate(0.0f, 0.0f, dist)
                 zdist += dist
-                gl.glTranslatef(-3 * dist, 0.0f, 0.0f)
+                gl.translate(-3 * dist, 0.0f, 0.0f)
                 xdist += -3 * dist
 
                 j = 0
                 while (j < 3) {
                     if (rot == 4 && j == 0) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                         e = 0
                     }
                     if (rot == 8 && j == 1) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                         e = 1
                     }
 
                     if (rot == 5 && j == 2) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                         e = 2
                     }
-                    gl.glTranslatef(dist, 0.0f, 0.0f)
+                    gl.translate(dist, 0.0f, 0.0f)
                     xdist += dist
-                    k = pos[j][n][i]
+                    cubeMatrixIndex = pos[j][n][i]
                     //
-                    cubeList[k].draw(gl)
+                    cubeList[cubeMatrixIndex].draw(gl) //aqui que desenha cada cubinho
+
+                    if (MagicCubeActivity.isActivated) {
+                        cubeSideIndex.forEachIndexed { index, cubeIndex ->
+                            if (cubeMatrixIndex == cubeIndex.first) {
+                                val zDistance = -matrixTracker.getZ()  // Negativo → quanto mais longe da tela
+                                cubeSide[index] = zDistance
+                                Log.d("ZDist", "Cube $cubeMatrixIndex color ${cubeIndex.second.name} Z = $zDistance")
+                            }
+                        }
+                    }
                     //
                     if (rot == 5 && j == 2) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(-Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                     }
                     if (rot == 8 && j == 1) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(-Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                         e = 1
                     }
                     if (rot == 4 && j == 0) {
-                        gl.glTranslatef(-xdist, -ydist, -zdist)
-                        gl.glRotatef(-Angle, 1f, 0f, 0f)
-                        gl.glTranslatef(xdist, ydist, zdist)
+                        gl.translate(-xdist, -ydist, -zdist)
+                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
+                        gl.translate(xdist, ydist, zdist)
                     }
                     j++
                 }
                 if (rot == 3 && i == 2) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(-Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                 }
                 if (rot == 7 && i == 1) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(-Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                     e = 1
                 }
                 if (rot == 2 && i == 0) {
-                    gl.glTranslatef(-xdist, -ydist, -zdist)
-                    gl.glRotatef(-Angle, 0f, 0f, 1f)
-                    gl.glTranslatef(xdist, ydist, zdist)
+                    gl.translate(-xdist, -ydist, -zdist)
+                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
+                    gl.translate(xdist, ydist, zdist)
                 }
 
                 i++
             }
             if (n == 0) sinal = -sinal
             if (rot == 1 && n == 2) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(-Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
             }
             if (rot == 6 && n == 1) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(-Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
                 e = 1
             }
             if (rot == 0 && n == 0) {
-                gl.glTranslatef(-xdist, -ydist, -zdist)
-                gl.glRotatef(-Angle, 0f, 1f, 0f)
-                gl.glTranslatef(xdist, ydist, zdist)
+                gl.translate(-xdist, -ydist, -zdist)
+                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
+                gl.translate(xdist, ydist, zdist)
             }
             n++
         }
@@ -511,8 +543,8 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
 
         soma = 9.0.toFloat()
 
-        if (Angle == 90f || Angle == -90f) {
-            Angle = 0f
+        if (rotatedAngle == 90f || rotatedAngle == -90f) {
+            rotatedAngle = 0f
             save()
             if (!embaralhando) {
                 rotating = false
@@ -537,9 +569,19 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         }
 
         if (rotating) {
-            if (Angle >= 0) Angle += soma
-            else Angle -= soma
+            if (rotatedAngle >= 0) rotatedAngle += soma
+            else rotatedAngle -= soma
         }
+    }
+
+    private fun GL10.translate(p0: Float, p1: Float, p2: Float) {
+        this.glTranslatef(p0, p1, p2)
+        matrixTracker.translate(p0, p1, p2)
+    }
+
+    private fun GL10.rotate(p0: Float, p1: Float, p2: Float, p3: Float) {
+        this.glRotatef(p0, p1, p2, p3)
+        matrixTracker.rotate(p0, p1, p2, p3)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {

@@ -2,6 +2,7 @@ package gustavo.brilhante.magiccubev2.activity
 
 import android.opengl.GLSurfaceView
 import android.os.Bundle
+import android.util.Log
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
 import gustavo.brilhante.magiccubev2.R
 import gustavo.brilhante.magiccubev2.grafic.CubeRenderer
+import kotlin.math.abs
 
 class MagicCubeActivity : AppCompatActivity() {
     var mRenderer: CubeRenderer? = null
@@ -51,7 +53,7 @@ class MagicCubeActivity : AppCompatActivity() {
         //criaÁ„o de botoes.
         val ll2 = LinearLayout(this)
         ll2.orientation = LinearLayout.HORIZONTAL
-        ll2.translationY = (actionBarHeight - buttonSize/3).toFloat()
+        ll2.translationY = (actionBarHeight - buttonSize / 3).toFloat()
         ll2.translationX = 0f
 
         val b_yellow = Button(this)
@@ -244,16 +246,39 @@ class MagicCubeActivity : AppCompatActivity() {
         this.addContentView(ll, ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
     }
 
+    private var startX = 0f
+    private var startY = 0f
+    private var startTime = 0L
+
     override fun onTouchEvent(e: MotionEvent): Boolean {
         val x = e.x
         val y = e.y
 
         if (e.action == MotionEvent.ACTION_DOWN) {
             //Log.d("DOWN","TESTE");
+            startX = x
+            startY = y
+            startTime = System.currentTimeMillis()
         }
         if (e.action == MotionEvent.ACTION_UP) {
-            //Log.d("UP","TESTE");
+            val endX = x
+            val endY = y
+            val endTime = System.currentTimeMillis()
+
+            val dx = endX - startX
+            val dy = endY - startY
+            val dt = endTime - startTime
+
             isActivated = true
+
+            when(getMovementType(dt, dx, dy)){
+                MovementType.SWIPE_UP -> startRotationOfClosestSide(-1)
+                MovementType.SWIPE_DOWN -> startRotationOfClosestSide(1)
+                MovementType.SWIPE_LEFT -> startRotationOfClosestSide(1)
+                MovementType.SWIPE_RIGHT -> startRotationOfClosestSide(-1)
+                MovementType.DRAG -> {}
+                MovementType.NONE -> {}
+            }
         }
         if (e.action == MotionEvent.ACTION_POINTER_UP) {
             zoom = false
@@ -262,13 +287,21 @@ class MagicCubeActivity : AppCompatActivity() {
             zoom = true
         }
         if (e.action == MotionEvent.ACTION_MOVE) {
-            val dx = x - mPreviousX
-            val dy = y - mPreviousY
+            val endX = x
+            val endY = y
+            val endTime = System.currentTimeMillis()
 
-            mRenderer!!.angleTestAux = mRenderer!!.angleTest
-            mRenderer!!.angleTest2Aux = mRenderer!!.angleTest2
-            mRenderer!!.angleTest += dx * TOUCH_SCALE_FACTOR
-            mRenderer!!.angleTest2 += dy * TOUCH_SCALE_FACTOR
+            val movementType = getMovementType(endTime - startTime, endX - startX, endY - startY)
+
+            if (movementType == MovementType.DRAG) {
+                val dx = x - mPreviousX
+                val dy = y - mPreviousY
+
+                mRenderer!!.angleRotateXAux = mRenderer!!.angleRotateX
+                mRenderer!!.angleRotateYAux = mRenderer!!.angleRotateY
+                mRenderer!!.angleRotateX += dx * TOUCH_SCALE_FACTOR
+                mRenderer!!.angleRotateY += dy * TOUCH_SCALE_FACTOR
+            }
         }
 
         mPreviousX = x
@@ -277,11 +310,61 @@ class MagicCubeActivity : AppCompatActivity() {
         return true
     }
 
+    private fun startRotationOfClosestSide(rotationSense: Int) {
+        if (!CubeRenderer.rotating) {
+            CubeRenderer.rotating = true
+            mRenderer?.rotateClosestSideToScreen(rotationSense)
+        }
+    }
+
+    private fun getMovementType(
+        distanceTime: Long,
+        distanceX: Float,
+        distanceY: Float,
+        timeThreshold: Int = 250,
+        distanceThreshold: Int = 100
+    ): MovementType {
+        // thresholds para considerar swipe
+        val distanceThreshold = 100      // px
+        val timeThreshold = 250          // ms
+
+        return if (distanceTime < timeThreshold) {
+            if (abs(distanceX) > abs(distanceY) && abs(distanceX) > distanceThreshold) {
+                if (distanceX > 0) {
+                    Log.d("Swipe", "→ Swipe para a direita")
+                    MovementType.SWIPE_RIGHT
+                    // ação personalizada
+                } else {
+                    Log.d("Swipe", "← Swipe para a esquerda")
+                    MovementType.SWIPE_LEFT
+                }
+            } else if (abs(distanceY) > distanceThreshold) {
+                if (distanceY > 0) {
+                    Log.d("Swipe", "↓ Swipe para baixo")
+                    MovementType.SWIPE_DOWN
+                } else {
+                    Log.d("Swipe", "↑ Swipe para cima")
+                    MovementType.SWIPE_UP
+                }
+            } else {
+                Log.d("Swipe", "None movement - distance")
+                MovementType.NONE
+            }
+        } else {
+            Log.d("Swipe", "Drag - time")
+            MovementType.DRAG
+        }
+    }
+
     companion object {
         @JvmField
         var isActivated: Boolean = false
         var zoom: Boolean = false
         var zoomOut: Boolean = false
     }
+}
+
+internal enum class MovementType {
+    SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT, DRAG, NONE
 }
 
