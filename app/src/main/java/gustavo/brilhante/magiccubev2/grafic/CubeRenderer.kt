@@ -6,6 +6,24 @@ import gustavo.brilhante.magiccubev2.activity.MagicCubeActivity
 import gustavo.brilhante.magiccubev2.activity.OptionsActivity
 import javax.microedition.khronos.opengles.GL10
 
+internal data class GlRenderPosition(
+    var xdist: Float = 0f,
+    var ydist: Float = 0f,
+    var zdist: Float = 0f
+) {
+    fun reset() {
+        xdist = 0f
+        ydist = 0f
+        zdist = 0f
+    }
+}
+
+internal data class CubePosition(
+    var x: Float = 0f,
+    var y: Float = 0f,
+    var z: Float = 0f
+)
+
 class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.Renderer {
     var fielOfView: Float = 0f
     var angleRotateX: Float = 0f
@@ -21,19 +39,17 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     private var rotatedAngle = 0f
     private var soma = 0f
     private val dist = 2.12.toFloat()
-    private var xdist = 0f
-    private var ydist = 0f
-    private var zdist = 0f
 
+    private val glRenderPosition = GlRenderPosition()
 
     var e: Int = 0
     var cubeMatrixIndex: Int = 0
     var sinal: Int = 1
     var aux1: Int = 0
     var aux2: Int = 0
-    var n: Int = 0
-    var i: Int = 0
-    var j: Int = 0
+    var indexAxisZ: Int = 0
+    var indexAxisY: Int = 0
+    var indexAxisX: Int = 0
     var a: Int = 1
     var cont: Int = 0
     var j2: Int = 0
@@ -42,7 +58,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     var pos: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
     var pos_init: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
     var face_color: Array<IntArray?> = arrayOfNulls(6)
-    var cubeSide: FloatArray = FloatArray(6)
+    private var cubeSide: Array<CubePosition> = Array<CubePosition>(6) { CubePosition() }
     var cubeSideIndex: List<Pair<Int, CubeSide>> = listOf(
         Pair(4, CubeSide.YELLOW), //yellow
         Pair(10, CubeSide.GREEN), //green
@@ -105,10 +121,10 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         for (j in 0..26) {
             //cubeList.add(new Cube());
 
-            pos_init[j % 3][n % 3][i % 3] = j
-            pos[j % 3][n % 3][i % 3] = j
-            if (i % 3 == 2 && j % 3 == 2) n++
-            if (j % 3 == 2) i++
+            pos_init[j % 3][indexAxisZ % 3][indexAxisY % 3] = j
+            pos[j % 3][indexAxisZ % 3][indexAxisY % 3] = j
+            if (indexAxisY % 3 == 2 && j % 3 == 2) indexAxisZ++
+            if (j % 3 == 2) indexAxisY++
         }
     }
 
@@ -322,7 +338,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     }
 
     fun rotateClosestSideToScreen(rotationSense: Int = 1) {
-        val indexMin = cubeSide.withIndex().minByOrNull { it.value }?.index ?: -1
+        val indexMin = cubeSide.withIndex().minByOrNull { it.value.z }?.index ?: -1
         if (indexMin >= 0) {
             rot = cubeSideIndex[indexMin].second.rotation ?: 20
             sense = rotationSense * cubeSideIndex[indexMin].second.orientation
@@ -355,9 +371,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
 
         gl.translate(0.0f, 0.0f, tamanhoCubo.toFloat())
 
-        xdist = 0f
-        ydist = 0f
-        zdist = 0f
+        glRenderPosition.reset()
 
         android.util.Log.d("TESTE", "TESTE")
 
@@ -385,87 +399,65 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
 
         if (sinal < 0) sinal = -sinal
         cubeMatrixIndex = 0
-        n = 0
+        indexAxisZ = 0
         if (MagicCubeActivity.isActivated) Log.d("ZDist", " ")
-        while (n < 3) {
-            if (rot == 0 && n == 0) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+        if (MagicCubeActivity.isActivated) Log.d("XDist", " ")
+        if (MagicCubeActivity.isActivated) Log.d("YDist", " ")
+        while (indexAxisZ < 3) {
+            if (rot == 0 && indexAxisZ == 0) {
+                gl.rotateAngle(rotatedAngle, CubeAxis.Y)
                 e = 0
             }
-            if (rot == 6 && n == 1) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+            if (rot == 6 && indexAxisZ == 1) {
+                gl.rotateAngle(rotatedAngle, CubeAxis.Y)
                 e = 1
             }
-            if (rot == 1 && n == 2) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+            if (rot == 1 && indexAxisZ == 2) {
+                gl.rotateAngle(rotatedAngle, CubeAxis.Y)
                 e = 2
             }
-            gl.translate(0.0f, sinal * dist, 0.0f)
-            ydist += sinal * dist
-            if (n > 0) {
-                gl.translate(-dist, 0.0f, -dist)
-                xdist += -dist
-                zdist += -dist
+            val direction = if (sinal > 0) CubeStepDirection.UP else CubeStepDirection.DOWN
+            gl.moveOnAxis(1, CubeAxis.Y, direction)
+            if (indexAxisZ > 0) {
+                gl.moveOnAxis(1, CubeAxis.X, CubeStepDirection.LEFT)
+                gl.moveOnAxis(1, CubeAxis.Z, CubeStepDirection.BACK)
             }
-            gl.translate(0.0f, 0.0f, -2 * dist)
-            gl.translate(dist, 0.0f, 0.0f)
-            zdist += -2 * dist
-            xdist += dist
-            i = 0
-            while (i < 3) {
-                if (rot == 2 && i == 0) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+            gl.moveOnAxis(2, CubeAxis.Z, CubeStepDirection.BACK)
+            gl.moveOnAxis(1, CubeAxis.X, CubeStepDirection.RIGHT)
+            indexAxisY = 0
+            while (indexAxisY < 3) {
+                if (rot == 2 && indexAxisY == 0) {
+                    gl.rotateAngle(rotatedAngle, CubeAxis.Z)
                     e = 0
                 }
-                if (rot == 7 && i == 1) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+                if (rot == 7 && indexAxisY == 1) {
+                    gl.rotateAngle(rotatedAngle, CubeAxis.Z)
                     e = 1
                 }
-                if (rot == 3 && i == 2) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+                if (rot == 3 && indexAxisY == 2) {
+                    gl.rotateAngle(rotatedAngle, CubeAxis.Z)
                     e = 2
                 }
-                gl.translate(0.0f, 0.0f, dist)
-                zdist += dist
-                gl.translate(-3 * dist, 0.0f, 0.0f)
-                xdist += -3 * dist
+                gl.moveOnAxis(1, CubeAxis.Z, CubeStepDirection.FORWARD)
+                gl.moveOnAxis(3, CubeAxis.X, CubeStepDirection.LEFT)
 
-                j = 0
-                while (j < 3) {
-                    if (rot == 4 && j == 0) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                indexAxisX = 0
+                while (indexAxisX < 3) {
+                    if (rot == 4 && indexAxisX == 0) {
+                        gl.rotateAngle(rotatedAngle, CubeAxis.X)
                         e = 0
                     }
-                    if (rot == 8 && j == 1) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                    if (rot == 8 && indexAxisX == 1) {
+                        gl.rotateAngle(rotatedAngle, CubeAxis.X)
                         e = 1
                     }
 
-                    if (rot == 5 && j == 2) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                    if (rot == 5 && indexAxisX == 2) {
+                        gl.rotateAngle(rotatedAngle, CubeAxis.X)
                         e = 2
                     }
-                    gl.translate(dist, 0.0f, 0.0f)
-                    xdist += dist
-                    cubeMatrixIndex = pos[j][n][i]
+                    gl.moveOnAxis(1, CubeAxis.X, CubeStepDirection.RIGHT)
+                    cubeMatrixIndex = pos[indexAxisX][indexAxisZ][indexAxisY]
                     //
                     cubeList[cubeMatrixIndex].draw(gl) //aqui que desenha cada cubinho
 
@@ -473,70 +465,57 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
                         cubeSideIndex.forEachIndexed { index, cubeIndex ->
                             if (cubeMatrixIndex == cubeIndex.first) {
                                 val zDistance = -matrixTracker.getZ()  // Negativo → quanto mais longe da tela
-                                cubeSide[index] = zDistance
+                                cubeSide[index].z = zDistance
                                 Log.d("ZDist", "Cube $cubeMatrixIndex color ${cubeIndex.second.name} Z = $zDistance")
+                                val yDistance = matrixTracker.getY()  // Negativo → quanto mais longe da tela
+                                cubeSide[index].y = yDistance
+                                Log.d("YDist", "Cube $cubeMatrixIndex color ${cubeIndex.second.name} Y = $yDistance")
+                                val xDistance = matrixTracker.getX()  // Negativo → quanto mais longe da tela
+                                cubeSide[index].x = xDistance
+                                Log.d("XDist", "Cube $cubeMatrixIndex color ${cubeIndex.second.name} X = $xDistance")
+                                Log.d("Dist", " ")
                             }
                         }
                     }
                     //
-                    if (rot == 5 && j == 2) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                    if (rot == 5 && indexAxisX == 2) {
+                        gl.rotateAngle(-rotatedAngle, CubeAxis.X)
                     }
-                    if (rot == 8 && j == 1) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                    if (rot == 8 && indexAxisX == 1) {
+                        gl.rotateAngle(-rotatedAngle, CubeAxis.X)
                         e = 1
                     }
-                    if (rot == 4 && j == 0) {
-                        gl.translate(-xdist, -ydist, -zdist)
-                        gl.rotate(-rotatedAngle, 1f, 0f, 0f)
-                        gl.translate(xdist, ydist, zdist)
+                    if (rot == 4 && indexAxisX == 0) {
+                        gl.rotateAngle(-rotatedAngle, CubeAxis.X)
                     }
-                    j++
+                    indexAxisX++
                 }
-                if (rot == 3 && i == 2) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+                if (rot == 3 && indexAxisY == 2) {
+                    gl.rotateAngle(-rotatedAngle, CubeAxis.Z)
                 }
-                if (rot == 7 && i == 1) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+                if (rot == 7 && indexAxisY == 1) {
+                    gl.rotateAngle(-rotatedAngle, CubeAxis.Z)
                     e = 1
                 }
-                if (rot == 2 && i == 0) {
-                    gl.translate(-xdist, -ydist, -zdist)
-                    gl.rotate(-rotatedAngle, 0f, 0f, 1f)
-                    gl.translate(xdist, ydist, zdist)
+                if (rot == 2 && indexAxisY == 0) {
+                    gl.rotateAngle(-rotatedAngle, CubeAxis.Z)
                 }
 
-                i++
+                indexAxisY++
             }
-            if (n == 0) sinal = -sinal
-            if (rot == 1 && n == 2) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+            if (indexAxisZ == 0) sinal = -sinal
+            if (rot == 1 && indexAxisZ == 2) {
+                gl.rotateAngle(-rotatedAngle, CubeAxis.Y)
             }
-            if (rot == 6 && n == 1) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+            if (rot == 6 && indexAxisZ == 1) {
+                gl.rotateAngle(-rotatedAngle, CubeAxis.Y)
                 e = 1
             }
-            if (rot == 0 && n == 0) {
-                gl.translate(-xdist, -ydist, -zdist)
-                gl.rotate(-rotatedAngle, 0f, 1f, 0f)
-                gl.translate(xdist, ydist, zdist)
+            if (rot == 0 && indexAxisZ == 0) {
+                gl.rotateAngle(-rotatedAngle, CubeAxis.Y)
             }
-            n++
+            indexAxisZ++
         }
-
-
 
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY) //Habilitar na renderiza��o
         gl.glEnableClientState(GL10.GL_COLOR_ARRAY) //Habilitar na renderiza��o
@@ -574,9 +553,35 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         }
     }
 
+    private fun GL10.moveOnAxis(steps: Int, axis: CubeAxis, direction: CubeStepDirection) {
+        val moveDistance = steps * dist * direction.orientation
+        when (axis) {
+            CubeAxis.X -> this.translateAndUpdateRenderPosition(moveDistance, 0.0f, 0.0f)
+            CubeAxis.Y -> this.translateAndUpdateRenderPosition(0.0f, moveDistance, 0.0f)
+            CubeAxis.Z -> this.translateAndUpdateRenderPosition(0.0f, 0.0f, moveDistance)
+        }
+    }
+
+    private fun GL10.translateAndUpdateRenderPosition(p0: Float, p1: Float, p2: Float) {
+        this.translate(p0, p1, p2)
+        glRenderPosition.xdist += p0
+        glRenderPosition.ydist += p1
+        glRenderPosition.zdist += p2
+    }
+
     private fun GL10.translate(p0: Float, p1: Float, p2: Float) {
         this.glTranslatef(p0, p1, p2)
         matrixTracker.translate(p0, p1, p2)
+    }
+
+    private fun GL10.rotateAngle(p0: Float, axis: CubeAxis) {
+        this.translate(-glRenderPosition.xdist, -glRenderPosition.ydist, -glRenderPosition.zdist)
+        when (axis) {
+            CubeAxis.X -> this.rotate(p0, 1f, 0f, 0f)
+            CubeAxis.Y -> this.rotate(p0, 0f, 1f, 0f)
+            CubeAxis.Z -> this.rotate(p0, 0f, 0f, 1f)
+        }
+        this.translate(glRenderPosition.xdist, glRenderPosition.ydist, glRenderPosition.zdist)
     }
 
     private fun GL10.rotate(p0: Float, p1: Float, p2: Float, p3: Float) {

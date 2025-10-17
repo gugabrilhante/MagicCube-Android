@@ -257,8 +257,6 @@ class MagicCubeActivity : AppCompatActivity() {
         val x = e.x
         val y = e.y
 
-
-
         if (e.action == MotionEvent.ACTION_DOWN) {
             val screenHeight = Resources.getSystem().displayMetrics.heightPixels
             val screenWidth = Resources.getSystem().displayMetrics.widthPixels
@@ -284,6 +282,9 @@ class MagicCubeActivity : AppCompatActivity() {
             val dt = endTime - startTime
 
             isActivated = true
+
+            Log.d("XDist", "Finger $endX X")
+            Log.d("YDist", "Finger $endY Y")
 
             when(getMovementType(dt, dx, dy)){
                 MovementType.SWIPE_UP -> startRotationOfClosestSide(-1 * verticalOrientation)

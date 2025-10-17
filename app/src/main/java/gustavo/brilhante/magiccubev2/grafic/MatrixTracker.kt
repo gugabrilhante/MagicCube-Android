@@ -32,6 +32,8 @@ class MatrixTracker {
     }
 
     fun getZ(): Float = current[14]
+    fun getY(): Float = current[13]
+    fun getX(): Float = current[12]
 
     fun reset() {
         Matrix.setIdentityM(current, 0)
