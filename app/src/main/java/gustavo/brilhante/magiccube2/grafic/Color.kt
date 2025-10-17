@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
 class Color {
     var Letra: Char = 0.toChar()

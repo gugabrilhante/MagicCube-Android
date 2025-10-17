@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="gustavo.brilhante.magiccubev2">
+    package="gustavo.brilhante.magiccube2">
 
     <application
         android:allowBackup="true"
@@ -8,12 +8,12 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="gustavo.brilhante.magiccubev2.activity.MagicCubeActivity"
+        <activity android:name="gustavo.brilhante.magiccube2.activity.MagicCubeActivity"
             android:label="@string/app_name"
             android:screenOrientation="sensorPortrait">
         </activity>
         <activity
-            android:name="gustavo.brilhante.magiccubev2.activity.MenuActivity"
+            android:name="gustavo.brilhante.magiccube2.activity.MenuActivity"
             android:exported="true" android:configChanges="orientation|screenSize"
             android:label="@string/app_name"
             android:screenOrientation="sensorPortrait">
@@ -23,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="gustavo.brilhante.magiccubev2.activity.OptionsActivity"
+            android:name="gustavo.brilhante.magiccube2.activity.OptionsActivity"
             android:label="@string/app_name"
             android:screenOrientation="sensorPortrait" />
     </application>

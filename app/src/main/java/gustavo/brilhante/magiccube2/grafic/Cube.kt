@@ -1,6 +1,5 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
-import android.opengl.GLU
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer

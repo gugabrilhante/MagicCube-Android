@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
 enum class CubeAxis {
     X, Y, Z

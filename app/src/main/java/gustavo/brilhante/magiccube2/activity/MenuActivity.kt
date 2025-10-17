@@ -1,10 +1,10 @@
-package gustavo.brilhante.magiccubev2.activity
+package gustavo.brilhante.magiccube2.activity
 
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import gustavo.brilhante.magiccubev2.R
+import gustavo.brilhante.magiccube2.R
 
 class MenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2;
+package gustavo.brilhante.magiccube2;
 
 import org.junit.Test;
 

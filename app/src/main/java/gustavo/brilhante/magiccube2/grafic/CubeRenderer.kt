@@ -1,9 +1,9 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
 import android.opengl.GLSurfaceView
 import android.util.Log
-import gustavo.brilhante.magiccubev2.activity.MagicCubeActivity
-import gustavo.brilhante.magiccubev2.activity.OptionsActivity
+import gustavo.brilhante.magiccube2.activity.MagicCubeActivity
+import gustavo.brilhante.magiccube2.activity.OptionsActivity
 import javax.microedition.khronos.opengles.GL10
 
 internal data class GlRenderPosition(

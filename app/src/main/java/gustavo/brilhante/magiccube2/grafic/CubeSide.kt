@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
 enum class CubeSide(val rotation: Int, val colorName: String, val orientation: Int) {
     YELLOW(0, "Yellow", -1),

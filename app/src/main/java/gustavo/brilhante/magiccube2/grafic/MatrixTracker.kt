@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2.grafic
+package gustavo.brilhante.magiccube2.grafic
 
 import android.opengl.Matrix
 import java.util.Stack

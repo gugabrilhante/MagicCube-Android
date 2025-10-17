@@ -1,4 +1,4 @@
-package gustavo.brilhante.magiccubev2.activity
+package gustavo.brilhante.magiccube2.activity
 
 import android.content.res.Resources
 import android.opengl.GLSurfaceView
@@ -11,8 +11,8 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import gustavo.brilhante.magiccubev2.R
-import gustavo.brilhante.magiccubev2.grafic.CubeRenderer
+import gustavo.brilhante.magiccube2.R
+import gustavo.brilhante.magiccube2.grafic.CubeRenderer
 import kotlin.math.abs
 
 class MagicCubeActivity : AppCompatActivity() {
