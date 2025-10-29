@@ -3,7 +3,7 @@
     <string name="app_name">Magic Cube</string>
     <string name="como_jogar">How to Play:</string>
     <string name="clique_na_tela_e_arraste_para_girar_o_cubo_por_inteiro">- Tap and drag on the screen to rotate the entire cube</string>
-    <string name="clique_nos_bot_es_coloridos_nas_laterais_para_girar_as_faces_do_cubo">- Tap the colored buttons on the sides to rotate the cube faces</string>
+    <string name="swipe_quickly_to">Swipe anywhere on the screen to quickly rotate the closest face</string>
     <string name="a_cor_do_bot_o_representa_o_quadrado_que_est_no_centro_da_face_a_ser_girada">- The color of the button represents the square at the center of the face to be rotated</string>
     <string name="existem_bot_es_nas_duas_laterais_cada_lateral_indica_o_sentido_em_que_a_face_do_cubo_girar">- There are buttons on both sides, and each side indicates the direction in which the cube face will rotate</string>
     <string name="op_es">Options:</string>
@@ -13,4 +13,7 @@
     <string name="embaralhar">Shuffle</string>
     <string name="velocidade">Speed</string>
     <string name="tamanho">Size</string>
+    <string name="start">Start</string>
+    <string name="options">Options</string>
+    <string name="quit">Quit</string>
 </resources>

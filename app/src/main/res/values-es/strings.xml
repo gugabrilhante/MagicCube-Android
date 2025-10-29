@@ -3,7 +3,7 @@
     <string name="app_name">Cubo Mágico</string>
     <string name="como_jogar">Cómo Jugar:</string>
     <string name="clique_na_tela_e_arraste_para_girar_o_cubo_por_inteiro">- Toca y arrastra la pantalla para girar el cubo completo</string>
-    <string name="clique_nos_bot_es_coloridos_nas_laterais_para_girar_as_faces_do_cubo">- Toca los botones de colores en los laterales para girar las caras del cubo</string>
+    <string name="swipe_quickly_to">Desliza el dedo en cualquier parte de la pantalla para girar la cara más cercana</string>
     <string name="a_cor_do_bot_o_representa_o_quadrado_que_est_no_centro_da_face_a_ser_girada">- El color del botón representa el cuadrado que está en el centro de la cara que se va a girar</string>
     <string name="existem_bot_es_nas_duas_laterais_cada_lateral_indica_o_sentido_em_que_a_face_do_cubo_girar">- Hay botones en ambos lados, y cada lado indica la dirección en la que la cara del cubo girará</string>
     <string name="op_es">Opciones:</string>
@@ -13,4 +13,7 @@
     <string name="embaralhar">Mezclar</string>
     <string name="velocidade">Velocidad</string>
     <string name="tamanho">Tamaño</string>
+    <string name="start">Comenzar</string>
+    <string name="options">Opciones</string>
+    <string name="quit">Salir</string>
 </resources>

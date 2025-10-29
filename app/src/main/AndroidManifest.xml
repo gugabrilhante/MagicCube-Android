@@ -7,23 +7,32 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
+        android:name=".app.MagicCubeApp"
         android:theme="@style/AppTheme">
-        <activity android:name="gustavo.brilhante.magiccube2.activity.MagicCubeActivity"
-            android:label="@string/app_name"
-            android:screenOrientation="sensorPortrait">
-        </activity>
         <activity
-            android:name="gustavo.brilhante.magiccube2.activity.MenuActivity"
-            android:exported="true" android:configChanges="orientation|screenSize"
-            android:label="@string/app_name"
-            android:screenOrientation="sensorPortrait">
+            android:name=".activity.MainMenuActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
+                <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="gustavo.brilhante.magiccube2.activity.OptionsActivity"
+            android:name=".activity.MagicCubeActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="sensorPortrait" />
+        <activity
+            android:name=".activity.MenuActivity"
+            android:configChanges="orientation|screenSize"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:screenOrientation="sensorPortrait">
+
+        </activity>
+        <activity
+            android:name=".activity.OptionsActivity"
             android:label="@string/app_name"
             android:screenOrientation="sensorPortrait" />
     </application>
