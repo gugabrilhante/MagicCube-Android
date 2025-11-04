@@ -10,7 +10,17 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
     var mColorBuffer: ByteBuffer? = null
     var mTfan1: ByteBuffer
     var mTfan2: ByteBuffer
-    var cor: ArrayList<Color> = ArrayList()
+    var cor: ArrayList<CubeRgbColor> = ArrayList()
+
+    private val colorMap = mapOf(
+        'R' to 0xFFFF0000.toInt(), // Red
+        'Y' to 0xFFFFFF00.toInt(), // Yellow
+        'B' to 0xFF0000FF.toInt(), // Blue
+        'G' to 0xFF00FF00.toInt(), // Green
+        'W' to 0xFFFFFFFF.toInt(), // White
+        'O' to 0xFFFFA500.toInt(), // Orange
+        'K' to 0xFF000000.toInt()  // Black
+    )
 
     //float[] normalData = new float[108];
     //FloatBuffer m_NormalData;
@@ -31,57 +41,8 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
         //WHITE (W) : maxColor,maxColor,maxColor,maxColor
         //ORANGE (O) : maxColor,69,0,maxColor
         //BLACK (K) : 0,0,0,maxColor
-        for (i in 0..5) {
-            when (cor[i].Letra) {
-                'R' -> {
-                    cor[i].v1 = 80.toByte()
-                    cor[i].v2 = 0
-                    cor[i].v3 = 0
-                    cor[i].v4 = maxColor
-                }
-
-                'Y' -> {
-                    cor[i].v1 = maxColor
-                    cor[i].v2 = maxColor
-                    cor[i].v3 = 0
-                    cor[i].v4 = maxColor
-                }
-
-                'B' -> {
-                    cor[i].v1 = 0
-                    cor[i].v2 = 0
-                    cor[i].v3 = maxColor
-                    cor[i].v4 = maxColor
-                }
-
-                'G' -> {
-                    cor[i].v1 = 0
-                    cor[i].v2 = 85
-                    cor[i].v3 = 43
-                    cor[i].v4 = maxColor
-                }
-
-                'W' -> {
-                    cor[i].v1 = maxColor
-                    cor[i].v2 = maxColor
-                    cor[i].v3 = maxColor
-                    cor[i].v4 = maxColor
-                }
-
-                'O' -> {
-                    cor[i].v1 = 150.toByte()
-                    cor[i].v2 = 89
-                    cor[i].v3 = 0
-                    cor[i].v4 = maxColor
-                }
-
-                'K' -> {
-                    cor[i].v1 = 0
-                    cor[i].v2 = 0
-                    cor[i].v3 = 0
-                    cor[i].v4 = maxColor
-                }
-            }
+        for (i in cor.indices) {
+            applyColor(cor[i])
         }
 
         val colors = byteArrayOf(
@@ -136,6 +97,22 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
         mColorBuffer?.position(0)
     }
 
+    fun applyColor(cor: CubeRgbColor) {
+        val argb = colorMap[cor.Letra] ?: 0xFF000000.toInt() // padrão = preto
+
+        // Extrai cada componente (0–255)
+        val a = (argb shr 24) and 0xFF
+        val r = (argb shr 16) and 0xFF
+        val g = (argb shr 8) and 0xFF
+        val b = argb and 0xFF
+
+        // Atribui aos campos
+        cor.v1 = r.toByte()
+        cor.v2 = g.toByte()
+        cor.v3 = b.toByte()
+        cor.v4 = a.toByte()
+    }
+
     init {
         val vertices = floatArrayOf(
             -1.0f, 1.0f, 1.0f,  //0
@@ -185,7 +162,7 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
 
         )
         for (i in 0..26) {
-            cor.add(Color())
+            cor.add(CubeRgbColor())
         }
 
         colors(cor1, cor2, cor3, cor4, cor5, cor6)

@@ -13,7 +13,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat.startActivity
 import gustavo.brilhante.magiccube2.activity.ui.theme.MagicCubeAndroidTheme
 import gustavo.brilhante.magiccube2.compose.MainMenuScreen
 
