@@ -5,34 +5,37 @@ import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import javax.microedition.khronos.opengles.GL10
 
-class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Char) {
+class Cube(
+    frontColor: ColorLetter = ColorLetter.BLACK,
+    upColor: ColorLetter = ColorLetter.BLACK,
+    rightColor: ColorLetter = ColorLetter.BLACK,
+    backColor: ColorLetter = ColorLetter.BLACK,
+    leftColor: ColorLetter = ColorLetter.BLACK,
+    downColor: ColorLetter = ColorLetter.BLACK
+) {
+    // cor1 = front
+    //cor2 = up
+    //cor3 = right
+    //cor4 = back
+    //cor5 = left
+    //cor6 = down
     var mFVertexBuffer: FloatBuffer
     var mColorBuffer: ByteBuffer? = null
     var mTfan1: ByteBuffer
     var mTfan2: ByteBuffer
-    var cor: ArrayList<CubeRgbColor> = ArrayList()
-
-    private val colorMap = mapOf(
-        'R' to 0xFFFF0000.toInt(), // Red
-        'Y' to 0xFFFFFF00.toInt(), // Yellow
-        'B' to 0xFF0000FF.toInt(), // Blue
-        'G' to 0xFF00FF00.toInt(), // Green
-        'W' to 0xFFFFFFFF.toInt(), // White
-        'O' to 0xFFFFA500.toInt(), // Orange
-        'K' to 0xFF000000.toInt()  // Black
-    )
+    var colorSideList: ArrayList<CubeRgbColor> = ArrayList()
 
     //float[] normalData = new float[108];
     //FloatBuffer m_NormalData;
-    fun colors(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Char) {
+    fun setSideColors(cor1: ColorLetter, cor2: ColorLetter, cor3: ColorLetter, cor4: ColorLetter, cor5: ColorLetter, cor6: ColorLetter) {
         val maxColor = 255.toByte()
 
-        cor[0].Letra = cor1
-        cor[1].Letra = cor2
-        cor[2].Letra = cor3
-        cor[3].Letra = cor4
-        cor[4].Letra = cor5
-        cor[5].Letra = cor6
+        colorSideList[0].colorLetter = cor1
+        colorSideList[1].colorLetter = cor2
+        colorSideList[2].colorLetter = cor3
+        colorSideList[3].colorLetter = cor4
+        colorSideList[4].colorLetter = cor5
+        colorSideList[5].colorLetter = cor6
 
         //RED (R)   : (byte) 130,0,0,maxColor
         //YELLOW (Y) : maxColor,maxColor,0,maxColor
@@ -41,64 +44,64 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
         //WHITE (W) : maxColor,maxColor,maxColor,maxColor
         //ORANGE (O) : maxColor,69,0,maxColor
         //BLACK (K) : 0,0,0,maxColor
-        for (i in cor.indices) {
-            applyColor(cor[i])
+        for (i in colorSideList.indices) {
+            applyColor(colorSideList[i])
         }
 
-        val colors = byteArrayOf(
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //0
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //1
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //2
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //3
+        val biggerCubeByteArrayColorList = byteArrayOf(
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //0
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //1
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //2
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //3
 
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //4
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //5
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //6
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //7
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //4
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //5
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //6
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //7
 
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //8
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //9
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //10
-            cor[0].v1, cor[0].v2, cor[0].v3, cor[0].v4,  //11
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //8
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //9
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //10
+            colorSideList[0].v1, colorSideList[0].v2, colorSideList[0].v3, colorSideList[0].v4,  //11
 
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //12	
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //13
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //14
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //15
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //12
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //13
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //14
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //15
 
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //16
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //17
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //18
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //19
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //16
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //17
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //18
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //19
 
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //20
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //21
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //22
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //23
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //20
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //21
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //22
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //23
 
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //24
-            cor[2].v1, cor[2].v2, cor[2].v3, cor[2].v4,  //25
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //26
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //27
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //24
+            colorSideList[2].v1, colorSideList[2].v2, colorSideList[2].v3, colorSideList[2].v4,  //25
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //26
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //27
 
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //28
-            cor[3].v1, cor[3].v2, cor[3].v3, cor[3].v4,  //29
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //30
-            cor[5].v1, cor[5].v2, cor[5].v3, cor[5].v4,  //31
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //28
+            colorSideList[3].v1, colorSideList[3].v2, colorSideList[3].v3, colorSideList[3].v4,  //29
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //30
+            colorSideList[5].v1, colorSideList[5].v2, colorSideList[5].v3, colorSideList[5].v4,  //31
 
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //32
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //33
-            cor[1].v1, cor[1].v2, cor[1].v3, cor[1].v4,  //34
-            cor[4].v1, cor[4].v2, cor[4].v3, cor[4].v4,  //35
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //32
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //33
+            colorSideList[1].v1, colorSideList[1].v2, colorSideList[1].v3, colorSideList[1].v4,  //34
+            colorSideList[4].v1, colorSideList[4].v2, colorSideList[4].v3, colorSideList[4].v4,  //35
 
         )
-        mColorBuffer = ByteBuffer.allocateDirect(colors.size)
-        mColorBuffer?.put(colors)
+        mColorBuffer = ByteBuffer.allocateDirect(biggerCubeByteArrayColorList.size)
+        mColorBuffer?.put(biggerCubeByteArrayColorList)
         mColorBuffer?.position(0)
     }
 
     fun applyColor(cor: CubeRgbColor) {
-        val argb = colorMap[cor.Letra] ?: 0xFF000000.toInt() // padrão = preto
+        val argb = cor.colorLetter.argb // padrão = preto
 
         // Extrai cada componente (0–255)
         val a = (argb shr 24) and 0xFF
@@ -162,10 +165,10 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
 
         )
         for (i in 0..26) {
-            cor.add(CubeRgbColor())
+            colorSideList.add(CubeRgbColor())
         }
 
-        colors(cor1, cor2, cor3, cor4, cor5, cor6)
+        setSideColors(frontColor, upColor, rightColor, backColor, leftColor, downColor)
         val tfan1 = byteArrayOf(
             1, 0, 3,
             9, 11, 2,
@@ -207,58 +210,100 @@ class Cube(cor1: Char, cor2: Char, cor3: Char, cor4: Char, cor5: Char, cor6: Cha
         mTfan2.position(0)
     }
 
-    fun getfront(): Char {
-        return cor[0].Letra
+    fun getFrontSide(): ColorLetter {
+        return colorSideList[0].colorLetter
     }
 
-    fun getup(): Char {
-        return cor[1].Letra
+    fun getUpperSide(): ColorLetter {
+        return colorSideList[1].colorLetter
     }
 
-    fun getright(): Char {
-        return cor[2].Letra
+    fun getRightSide(): ColorLetter {
+        return colorSideList[2].colorLetter
     }
 
-    fun getback(): Char {
-        return cor[3].Letra
+    fun getBackSide(): ColorLetter {
+        return colorSideList[3].colorLetter
     }
 
-    fun getleft(): Char {
-        return cor[4].Letra
+    fun getLeftSide(): ColorLetter {
+        return colorSideList[4].colorLetter
     }
 
-    fun getdown(): Char {
-        return cor[5].Letra
+    fun getDownSide(): ColorLetter {
+        return colorSideList[5].colorLetter
     }
 
-    fun setfront(cor: Char) {
-        colors(cor, this.cor[1].Letra, this.cor[2].Letra, this.cor[3].Letra, this.cor[4].Letra, this.cor[5].Letra)
-        this.cor[0].Letra = cor
+    fun setfront(cor: ColorLetter) {
+        setSideColors(
+            cor,
+            this.colorSideList[1].colorLetter,
+            this.colorSideList[2].colorLetter,
+            this.colorSideList[3].colorLetter,
+            this.colorSideList[4].colorLetter,
+            this.colorSideList[5].colorLetter
+        )
+        this.colorSideList[0].colorLetter = cor
     }
 
-    fun setup(cor: Char) {
-        colors(this.cor[0].Letra, cor, this.cor[2].Letra, this.cor[3].Letra, this.cor[4].Letra, this.cor[5].Letra)
-        this.cor[1].Letra = cor
+    fun setup(cor: ColorLetter) {
+        setSideColors(
+            this.colorSideList[0].colorLetter,
+            cor,
+            this.colorSideList[2].colorLetter,
+            this.colorSideList[3].colorLetter,
+            this.colorSideList[4].colorLetter,
+            this.colorSideList[5].colorLetter
+        )
+        this.colorSideList[1].colorLetter = cor
     }
 
-    fun setright(cor: Char) {
-        colors(this.cor[0].Letra, this.cor[1].Letra, cor, this.cor[3].Letra, this.cor[4].Letra, this.cor[5].Letra)
-        this.cor[2].Letra = cor
+    fun setright(cor: ColorLetter) {
+        setSideColors(
+            this.colorSideList[0].colorLetter,
+            this.colorSideList[1].colorLetter,
+            cor,
+            this.colorSideList[3].colorLetter,
+            this.colorSideList[4].colorLetter,
+            this.colorSideList[5].colorLetter
+        )
+        this.colorSideList[2].colorLetter = cor
     }
 
-    fun setback(cor: Char) {
-        colors(this.cor[0].Letra, this.cor[1].Letra, this.cor[2].Letra, cor, this.cor[4].Letra, this.cor[5].Letra)
-        this.cor[3].Letra = cor
+    fun setback(cor: ColorLetter) {
+        setSideColors(
+            this.colorSideList[0].colorLetter,
+            this.colorSideList[1].colorLetter,
+            this.colorSideList[2].colorLetter,
+            cor,
+            this.colorSideList[4].colorLetter,
+            this.colorSideList[5].colorLetter
+        )
+        this.colorSideList[3].colorLetter = cor
     }
 
-    fun setleft(cor: Char) {
-        colors(this.cor[0].Letra, this.cor[1].Letra, this.cor[2].Letra, this.cor[3].Letra, cor, this.cor[5].Letra)
-        this.cor[4].Letra = cor
+    fun setleft(cor: ColorLetter) {
+        setSideColors(
+            this.colorSideList[0].colorLetter,
+            this.colorSideList[1].colorLetter,
+            this.colorSideList[2].colorLetter,
+            this.colorSideList[3].colorLetter,
+            cor,
+            this.colorSideList[5].colorLetter
+        )
+        this.colorSideList[4].colorLetter = cor
     }
 
-    fun setdown(cor: Char) {
-        colors(this.cor[0].Letra, this.cor[1].Letra, this.cor[2].Letra, this.cor[3].Letra, this.cor[4].Letra, cor)
-        this.cor[5].Letra = cor
+    fun setdown(cor: ColorLetter) {
+        setSideColors(
+            this.colorSideList[0].colorLetter,
+            this.colorSideList[1].colorLetter,
+            this.colorSideList[2].colorLetter,
+            this.colorSideList[3].colorLetter,
+            this.colorSideList[4].colorLetter,
+            cor
+        )
+        this.colorSideList[5].colorLetter = cor
     }
 
     fun draw(gl: GL10) {

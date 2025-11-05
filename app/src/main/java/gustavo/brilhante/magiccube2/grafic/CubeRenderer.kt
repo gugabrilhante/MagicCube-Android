@@ -82,41 +82,41 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     private val matrixTracker = MatrixTracker()
 
     init {
-        cubeList.add(Cube('K', 'Y', 'K', 'G', 'O', 'K')) //0
-        cubeList.add(Cube('K', 'Y', 'K', 'G', 'K', 'K')) //1
-        cubeList.add(Cube('K', 'Y', 'R', 'G', 'K', 'K')) //2
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //0
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN)) //1
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //2
 
-        cubeList.add(Cube('K', 'Y', 'K', 'K', 'O', 'K')) //3
-        cubeList.add(Cube('K', 'Y', 'K', 'K', 'K', 'K')) //4 middle yellow
-        cubeList.add(Cube('K', 'Y', 'R', 'K', 'K', 'K')) //5
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //3
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW)) //4 middle yellow
+        cubeList.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //5
 
-        cubeList.add(Cube('B', 'Y', 'K', 'K', 'O', 'K')) //6
-        cubeList.add(Cube('B', 'Y', 'K', 'K', 'K', 'K')) //7
-        cubeList.add(Cube('B', 'Y', 'R', 'K', 'K', 'K')) //8
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //6
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW)) //7
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //8
 
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'K')) //9
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'K')) //10 middle green
-        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'K')) //11
+        cubeList.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //9
+        cubeList.add(Cube(backColor = ColorLetter.GREEN)) //10 middle green
+        cubeList.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //11
 
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'K')) //12 middle orange
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'K')) //13
-        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'K')) //14 middle red
+        cubeList.add(Cube(leftColor = ColorLetter.ORANGE)) //12 middle orange
+        cubeList.add(Cube()) //13
+        cubeList.add(Cube(rightColor = ColorLetter.RED)) //14 middle red
 
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'K')) //15
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'K')) //16 middle blue
-        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'K')) //17
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE)) //15
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE)) //16 middle blue
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED)) //17
 
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'O', 'W')) //18
-        cubeList.add(Cube('K', 'K', 'K', 'G', 'K', 'W')) //19
-        cubeList.add(Cube('K', 'K', 'R', 'G', 'K', 'W')) //20
+        cubeList.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //18
+        cubeList.add(Cube(backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //19
+        cubeList.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //20
 
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'O', 'W')) //21
-        cubeList.add(Cube('K', 'K', 'K', 'K', 'K', 'W')) //22 middle white
-        cubeList.add(Cube('K', 'K', 'R', 'K', 'K', 'W')) //23
+        cubeList.add(Cube(leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //21
+        cubeList.add(Cube(downColor = ColorLetter.WHITE)) //22 middle white
+        cubeList.add(Cube(rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //23
 
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'O', 'W')) //24
-        cubeList.add(Cube('B', 'K', 'K', 'K', 'K', 'W')) //25
-        cubeList.add(Cube('B', 'K', 'R', 'K', 'K', 'W')) //26
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //24
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, downColor = ColorLetter.WHITE)) //25
+        cubeList.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //26
 
         for (j in 0..26) {
             //cubeList.add(new Cube());
@@ -134,7 +134,7 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
     //left==3
     //down==4
     //up==5
-    fun ChangeColor(cubo: Int, face: Int, letter: Char) {
+    fun ChangeColor(cubo: Int, face: Int, letter: ColorLetter) {
         if (face == 0) cubeList[cubo].setfront(letter)
         if (face == 1) cubeList[cubo].setright(letter)
         if (face == 2) cubeList[cubo].setback(letter)
@@ -143,19 +143,19 @@ class CubeRenderer(private val mTranslucentBackground: Boolean) : GLSurfaceView.
         if (face == 5) cubeList[cubo].setup(letter)
     }
 
-    fun GetColor(cubo: Int, face: Int): Char {
-        if (face == 0) return cubeList[cubo].getfront()
-        if (face == 1) return cubeList[cubo].getright()
-        if (face == 2) return cubeList[cubo].getback()
-        if (face == 3) return cubeList[cubo].getleft()
-        if (face == 4) return cubeList[cubo].getdown()
-        if (face == 5) return cubeList[cubo].getup()
-        return 0.toChar()
+    fun GetColor(cubo: Int, face: Int): ColorLetter {
+        if (face == 0) return cubeList[cubo].getFrontSide()
+        if (face == 1) return cubeList[cubo].getRightSide()
+        if (face == 2) return cubeList[cubo].getBackSide()
+        if (face == 3) return cubeList[cubo].getLeftSide()
+        if (face == 4) return cubeList[cubo].getDownSide()
+        if (face == 5) return cubeList[cubo].getUpperSide()
+        return ColorLetter.BLACK
     }
 
     fun SaveRot(cubo: Int) {
-        var cor1: Char
-        var cor2 = 0.toChar()
+        var cor1: ColorLetter
+        var cor2 = ColorLetter.BLACK
         var indice: Int
         var t1: Int
         var t2: Int
