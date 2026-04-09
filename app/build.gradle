@@ -1,6 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'org.jetbrains.kotlin.android'
-apply plugin: 'org.jetbrains.kotlin.plugin.compose'
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
 
 android {
     compileSdkVersion 36
@@ -24,10 +26,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14" // ou a versão compatível com seu Compose
-    }
-
     kotlinOptions {
         jvmTarget = '11'
     }
@@ -41,32 +39,24 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Android base
-    implementation 'androidx.core:core-ktx:1.17.0'
-    implementation 'androidx.appcompat:appcompat:1.7.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.9.4'
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.lifecycle.runtime
 
-    // Compose BOM
-    implementation(platform("androidx.compose:compose-bom:2025.10.01"))
+    // Compose BOM + core
+    implementation platform(libs.compose.bom)
+    implementation libs.bundles.compose.core
+    implementation libs.androidx.activity.compose
 
-    // Compose core
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-
-    // Activity Compose
-    implementation("androidx.activity:activity-compose:1.11.0")
-
-    // ✅ Koin (corrigido)
-    implementation("io.insert-koin:koin-android:4.1.1")
-    implementation("io.insert-koin:koin-androidx-compose:4.1.1")
+    // Koin
+    implementation libs.bundles.koin
 
     // Testes
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation platform('androidx.compose:compose-bom:2025.10.01')
-    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    testImplementation libs.junit
+    androidTestImplementation platform(libs.compose.bom)
+    androidTestImplementation libs.compose.ui.test.junit4
 
     // Debug tools
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation libs.compose.ui.tooling
+    debugImplementation libs.compose.ui.test.manifest
 }
