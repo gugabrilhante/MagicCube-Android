@@ -111,15 +111,15 @@ class CubeViewModel(private val repository: SettingsRepository) : ViewModel() {
 
                     moveOnAxis(1, CubeAxis.X, CubeStepDirection.RIGHT)
 
-                    val cubeIndex = engine.pos[indexAxisX][indexAxisZ][indexAxisY]
-                    commands.add(CubeDrawCommand(engine.cubeList[cubeIndex], computeMVP()))
+                    val cubeIndex = engine.cubeGrid[indexAxisX][indexAxisZ][indexAxisY]
+                    commands.add(CubeDrawCommand(engine.cubes[cubeIndex], computeMVP()))
 
                     if (isInertiaActive) {
-                        engine.cubeSideIndex.forEachIndexed { idx, entry ->
+                        engine.faceCenterCubes.forEachIndexed { idx, entry ->
                             if (cubeIndex == entry.first) {
-                                engine.cubeSide[idx].z = -matrixTracker.getZ()
-                                engine.cubeSide[idx].y = matrixTracker.getY()
-                                engine.cubeSide[idx].x = matrixTracker.getX()
+                                engine.faceCenterPositions[idx].z = -matrixTracker.getZ()
+                                engine.faceCenterPositions[idx].y = matrixTracker.getY()
+                                engine.faceCenterPositions[idx].x = matrixTracker.getX()
                             }
                         }
                     }
@@ -147,9 +147,11 @@ class CubeViewModel(private val repository: SettingsRepository) : ViewModel() {
             indexAxisZ++
         }
 
-        engine.postFrameAdvance()
-
         _renderState.value = CubeRenderState(commands)
+    }
+
+    fun advanceFrame() {
+        engine.postFrameAdvance()
     }
 
     // --- Touch handlers (called from UI thread) ---

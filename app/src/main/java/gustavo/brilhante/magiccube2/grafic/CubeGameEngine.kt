@@ -1,5 +1,7 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import kotlin.random.Random
+
 data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
 
 /**
@@ -17,34 +19,35 @@ data class RotationState(
 class CubeGameEngine(shuffleCount: Int) {
 
     // --- Cube objects ---
-    val cubeList: ArrayList<Cube> = ArrayList()
+    val cubes: MutableList<Cube> = mutableListOf()
 
-    // --- Position grid: pos[x][z][y] = cubeIndex ---
-    val pos: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
+    // --- Position grid: cubeGrid[x][z][y] = cubeIndex ---
+    val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
 
     // --- Rotation state ---
     @Volatile var rotation: RotationState = RotationState()
     var rotatedAngle: Float = 0f
 
     // --- Shuffle state ---
-    var embaralhando: Boolean = true
-    val numEmbaralhar: Int = 10 * shuffleCount
-    var cont: Int = 0
+    var isShuffling: Boolean = true
+    val totalShuffleMoves: Int = 10 * shuffleCount
+    var shuffleMovesCompleted: Int = 0
 
     // --- Face tracking for closest-side detection ---
-    val cubeSide: Array<CubePosition> = Array(6) { CubePosition() }
-    val cubeSideIndex: List<Pair<Int, CubeSide>> = listOf(
-        Pair(4, CubeSide.YELLOW),
-        Pair(10, CubeSide.GREEN),
-        Pair(12, CubeSide.ORANGE),
-        Pair(14, CubeSide.RED),
-        Pair(16, CubeSide.BLUE),
-        Pair(22, CubeSide.WHITE)
+    val faceCenterPositions: Array<CubePosition> = Array(6) { CubePosition() }
+    val faceCenterCubes: List<Pair<Int, CubeSide>> = listOf(
+        4 to CubeSide.YELLOW,
+        10 to CubeSide.GREEN,
+        12 to CubeSide.ORANGE,
+        14 to CubeSide.RED,
+        16 to CubeSide.BLUE,
+        22 to CubeSide.WHITE
     )
 
-    private val eixoy = intArrayOf(0, 1, 2, 3)
-    private val eixoz = intArrayOf(1, 5, 3, 4)
-    private val eixox = intArrayOf(0, 4, 2, 5)
+    // Face index cycles used when rotating colors after a slice move
+    private val yAxisFaceCycle = intArrayOf(0, 1, 2, 3)
+    private val zAxisFaceCycle = intArrayOf(1, 5, 3, 4)
+    private val xAxisFaceCycle = intArrayOf(0, 4, 2, 5)
 
     private val shuffleableSlices = listOf(
         ActiveSlice.ROTATION_AXIS_Z_0,
@@ -61,40 +64,40 @@ class CubeGameEngine(shuffleCount: Int) {
     }
 
     private fun initCubes() {
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //0
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN)) //1
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //2
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //3
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW)) //4 middle yellow
-        cubeList.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //5
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //6
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW)) //7
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //8
-        cubeList.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //9
-        cubeList.add(Cube(backColor = ColorLetter.GREEN)) //10 middle green
-        cubeList.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //11
-        cubeList.add(Cube(leftColor = ColorLetter.ORANGE)) //12 middle orange
-        cubeList.add(Cube()) //13
-        cubeList.add(Cube(rightColor = ColorLetter.RED)) //14 middle red
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE)) //15
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE)) //16 middle blue
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED)) //17
-        cubeList.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //18
-        cubeList.add(Cube(backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //19
-        cubeList.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //20
-        cubeList.add(Cube(leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //21
-        cubeList.add(Cube(downColor = ColorLetter.WHITE)) //22 middle white
-        cubeList.add(Cube(rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //23
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //24
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, downColor = ColorLetter.WHITE)) //25
-        cubeList.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //26
+        cubes.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //0
+        cubes.add(Cube(upColor = ColorLetter.YELLOW, backColor = ColorLetter.GREEN)) //1
+        cubes.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //2
+        cubes.add(Cube(upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //3
+        cubes.add(Cube(upColor = ColorLetter.YELLOW)) //4 middle yellow
+        cubes.add(Cube(upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //5
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, leftColor = ColorLetter.ORANGE)) //6
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW)) //7
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, upColor = ColorLetter.YELLOW, rightColor = ColorLetter.RED)) //8
+        cubes.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE)) //9
+        cubes.add(Cube(backColor = ColorLetter.GREEN)) //10 middle green
+        cubes.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN)) //11
+        cubes.add(Cube(leftColor = ColorLetter.ORANGE)) //12 middle orange
+        cubes.add(Cube()) //13
+        cubes.add(Cube(rightColor = ColorLetter.RED)) //14 middle red
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE)) //15
+        cubes.add(Cube(frontColor = ColorLetter.BLUE)) //16 middle blue
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED)) //17
+        cubes.add(Cube(backColor = ColorLetter.GREEN, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //18
+        cubes.add(Cube(backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //19
+        cubes.add(Cube(rightColor = ColorLetter.RED, backColor = ColorLetter.GREEN, downColor = ColorLetter.WHITE)) //20
+        cubes.add(Cube(leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //21
+        cubes.add(Cube(downColor = ColorLetter.WHITE)) //22 middle white
+        cubes.add(Cube(rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //23
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, leftColor = ColorLetter.ORANGE, downColor = ColorLetter.WHITE)) //24
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, downColor = ColorLetter.WHITE)) //25
+        cubes.add(Cube(frontColor = ColorLetter.BLUE, rightColor = ColorLetter.RED, downColor = ColorLetter.WHITE)) //26
     }
 
     private fun initPositions() {
         var indexAxisZ = 0
         var indexAxisY = 0
         for (j in 0..26) {
-            pos[j % 3][indexAxisZ % 3][indexAxisY % 3] = j
+            cubeGrid[j % 3][indexAxisZ % 3][indexAxisY % 3] = j
             if (indexAxisY % 3 == 2 && j % 3 == 2) indexAxisZ++
             if (j % 3 == 2) indexAxisY++
         }
@@ -103,11 +106,11 @@ class CubeGameEngine(shuffleCount: Int) {
     // --- Public API ---
 
     fun rotateClosestSideToScreen(rotationSense: Int = 1) {
-        val indexMin = cubeSide.withIndex().minByOrNull { it.value.z }?.index ?: -1
-        if (indexMin >= 0) {
+        val closestFaceIndex = faceCenterPositions.withIndex().minByOrNull { it.value.z }?.index ?: -1
+        if (closestFaceIndex >= 0) {
             rotation = rotation.copy(
-                activeSlice = cubeSideIndex[indexMin].second.rotation,
-                direction = rotationSense * cubeSideIndex[indexMin].second.orientation
+                activeSlice = faceCenterCubes[closestFaceIndex].second.rotation,
+                direction = rotationSense * faceCenterCubes[closestFaceIndex].second.orientation
             )
         }
     }
@@ -121,7 +124,7 @@ class CubeGameEngine(shuffleCount: Int) {
     fun postFrameAdvance() {
         if (rotatedAngle == 90f || rotatedAngle == -90f) {
             rotatedAngle = 0f
-            save()
+            commitSliceRotation()
             handlePostRotation()
             return
         }
@@ -132,14 +135,14 @@ class CubeGameEngine(shuffleCount: Int) {
     }
 
     private fun handlePostRotation() {
-        if (!embaralhando) {
+        if (!isShuffling) {
             rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
         } else {
-            val newDirection = if (Math.random() < 0.5) 1 else -1
+            val newDirection = if (Random.nextDouble() < 0.5) 1 else -1
             rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection)
-            cont++
-            if (cont == numEmbaralhar) {
-                embaralhando = false
+            shuffleMovesCompleted++
+            if (shuffleMovesCompleted == totalShuffleMoves) {
+                isShuffling = false
                 rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
             }
         }
@@ -153,113 +156,87 @@ class CubeGameEngine(shuffleCount: Int) {
         else -> 0
     }
 
-    private fun getColor(cubo: Int, face: Int): ColorLetter = when (face) {
-        0 -> cubeList[cubo].getFrontSide()
-        1 -> cubeList[cubo].getRightSide()
-        2 -> cubeList[cubo].getBackSide()
-        3 -> cubeList[cubo].getLeftSide()
-        4 -> cubeList[cubo].getDownSide()
-        5 -> cubeList[cubo].getUpperSide()
+    private fun getFaceColor(cubeIdx: Int, face: Int): ColorLetter = when (face) {
+        0 -> cubes[cubeIdx].getFrontSide()
+        1 -> cubes[cubeIdx].getRightSide()
+        2 -> cubes[cubeIdx].getBackSide()
+        3 -> cubes[cubeIdx].getLeftSide()
+        4 -> cubes[cubeIdx].getDownSide()
+        5 -> cubes[cubeIdx].getUpperSide()
         else -> ColorLetter.BLACK
     }
 
-    private fun changeColor(cubo: Int, face: Int, letter: ColorLetter) {
+    private fun setFaceColor(cubeIdx: Int, face: Int, color: ColorLetter) {
         when (face) {
-            0 -> cubeList[cubo].setfront(letter)
-            1 -> cubeList[cubo].setright(letter)
-            2 -> cubeList[cubo].setback(letter)
-            3 -> cubeList[cubo].setleft(letter)
-            4 -> cubeList[cubo].setdown(letter)
-            5 -> cubeList[cubo].setup(letter)
+            0 -> cubes[cubeIdx].setfront(color)
+            1 -> cubes[cubeIdx].setright(color)
+            2 -> cubes[cubeIdx].setback(color)
+            3 -> cubes[cubeIdx].setleft(color)
+            4 -> cubes[cubeIdx].setdown(color)
+            5 -> cubes[cubeIdx].setup(color)
         }
     }
 
-    private fun saveRot(cubo: Int) {
-        val eixo = when (rotation.activeSlice) {
-            ActiveSlice.ROTATION_AXIS_Z_0, ActiveSlice.ROTATION_AXIS_Z_1, ActiveSlice.ROTATION_AXIS_Z_2 -> eixoy
-            ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 -> eixoz
-            else -> eixox
+    private fun applyFaceColorRotation(cubeIdx: Int) {
+        val faceCycle = when (rotation.activeSlice) {
+            ActiveSlice.ROTATION_AXIS_Z_0, ActiveSlice.ROTATION_AXIS_Z_1, ActiveSlice.ROTATION_AXIS_Z_2 -> yAxisFaceCycle
+            ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 -> zAxisFaceCycle
+            else -> xAxisFaceCycle
         }
-        var cor2 = ColorLetter.BLACK
-        for (q in 0..3) {
-            val t1: Int; val t2: Int; val indice: Int
-            if (rotation.direction == 1) { t1 = 0; t2 = 1; indice = q }
-            else { t1 = 3; t2 = 0; indice = (3 - q) }
+        var nextColor = ColorLetter.BLACK
+        for (i in 0..3) {
+            val dirStart: Int; val dirStep: Int; val faceIndex: Int
+            if (rotation.direction == 1) { dirStart = 0; dirStep = 1; faceIndex = i }
+            else { dirStart = 3; dirStep = 0; faceIndex = (3 - i) }
 
-            val cor1 = if (q == 0) getColor(cubo, eixo[indice]) else cor2
-            cor2 = getColor(cubo, eixo[((indice + t2) % 4 + t1) % 4])
-            changeColor(cubo, eixo[((indice + t2) % 4 + t1) % 4], cor1)
+            val fromColor = if (i == 0) getFaceColor(cubeIdx, faceCycle[faceIndex]) else nextColor
+            nextColor = getFaceColor(cubeIdx, faceCycle[((faceIndex + dirStep) % 4 + dirStart) % 4])
+            setFaceColor(cubeIdx, faceCycle[((faceIndex + dirStep) % 4 + dirStart) % 4], fromColor)
         }
     }
 
-    private fun save() {
-        val n2 = computeSliceIndex()
+    private fun rotateSlice(
+        getCell: (col: Int, row: Int) -> Int,
+        setCell: (col: Int, row: Int, value: Int) -> Unit
+    ) {
+        repeat(2) { iteration ->
+            var row = 0; var col = 0
+            var current = if (rotation.direction == 1) getCell(col, row) else getCell(row, col)
+            repeat(8) {
+                val displaced = current
+                if (row == 0 && col != 0) col--
+                else if (col == 2) row--
+                else if (row == 2) col++
+                else if (col == 0) row++
+                if (rotation.direction == 1) {
+                    current = getCell(col, row); setCell(col, row, displaced)
+                } else {
+                    current = getCell(row, col); setCell(row, col, displaced)
+                }
+                if (iteration == 1) applyFaceColorRotation(displaced)
+            }
+        }
+    }
 
-        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_1) {
-            repeat(2) { pass ->
-                var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
-                for (s2 in 0 until 8) {
-                    aux1 = if (rotation.direction == 1) {
-                        if (s2 == 0) pos[j2][n2][i2] else aux2
-                    } else {
-                        if (s2 == 0) pos[i2][n2][j2] else aux2
-                    }
-                    if (i2 == 0 && j2 != 0) j2--
-                    else if (j2 == 2 && i2 != 0) i2--
-                    else if (i2 == 2 && j2 != 2) j2++
-                    else if (j2 == 0 && i2 != 2) i2++
-                    if (rotation.direction == 1) {
-                        aux2 = pos[j2][n2][i2]; pos[j2][n2][i2] = aux1
-                    } else {
-                        aux2 = pos[i2][n2][j2]; pos[i2][n2][j2] = aux1
-                    }
-                    if (pass == 1) saveRot(aux1)
-                }
-            }
-        }
-        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_1) {
-            repeat(2) { pass ->
-                var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
-                for (s2 in 0 until 8) {
-                    aux1 = if (rotation.direction == 1) {
-                        if (s2 == 0) pos[j2][i2][n2] else aux2
-                    } else {
-                        if (s2 == 0) pos[i2][j2][n2] else aux2
-                    }
-                    if (i2 == 0 && j2 != 0) j2--
-                    else if (j2 == 2 && i2 != 0) i2--
-                    else if (i2 == 2 && j2 != 2) j2++
-                    else if (j2 == 0 && i2 != 2) i2++
-                    if (rotation.direction == 1) {
-                        aux2 = pos[j2][i2][n2]; pos[j2][i2][n2] = aux1
-                    } else {
-                        aux2 = pos[i2][j2][n2]; pos[i2][j2][n2] = aux1
-                    }
-                    if (pass == 1) saveRot(aux1)
-                }
-            }
-        }
-        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_1) {
-            repeat(2) { pass ->
-                var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
-                for (s2 in 0 until 8) {
-                    aux1 = if (rotation.direction == 1) {
-                        if (s2 == 0) pos[n2][j2][i2] else aux2
-                    } else {
-                        if (s2 == 0) pos[n2][i2][j2] else aux2
-                    }
-                    if (i2 == 0 && j2 != 0) j2--
-                    else if (j2 == 2 && i2 != 0) i2--
-                    else if (i2 == 2 && j2 != 2) j2++
-                    else if (j2 == 0 && i2 != 2) i2++
-                    if (rotation.direction == 1) {
-                        aux2 = pos[n2][j2][i2]; pos[n2][j2][i2] = aux1
-                    } else {
-                        aux2 = pos[n2][i2][j2]; pos[n2][i2][j2] = aux1
-                    }
-                    if (pass == 1) saveRot(aux1)
-                }
-            }
+    private fun commitSliceRotation() {
+        val sliceIdx = computeSliceIndex()
+        when (rotation.activeSlice) {
+            ActiveSlice.ROTATION_AXIS_Z_0, ActiveSlice.ROTATION_AXIS_Z_1, ActiveSlice.ROTATION_AXIS_Z_2 ->
+                rotateSlice(
+                    getCell = { col, row -> cubeGrid[col][sliceIdx][row] },
+                    setCell = { col, row, v -> cubeGrid[col][sliceIdx][row] = v }
+                )
+            ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 ->
+                rotateSlice(
+                    getCell = { col, row -> cubeGrid[col][row][sliceIdx] },
+                    setCell = { col, row, v -> cubeGrid[col][row][sliceIdx] = v }
+                )
+            ActiveSlice.ROTATION_AXIS_X_0, ActiveSlice.ROTATION_AXIS_X_1, ActiveSlice.ROTATION_AXIS_X_2 ->
+                rotateSlice(
+                    getCell = { col, row -> cubeGrid[sliceIdx][col][row] },
+                    setCell = { col, row, v -> cubeGrid[sliceIdx][col][row] = v }
+                )
+            ActiveSlice.NONE -> Unit
         }
     }
 }

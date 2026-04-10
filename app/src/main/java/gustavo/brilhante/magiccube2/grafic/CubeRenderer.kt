@@ -34,5 +34,7 @@ class CubeRenderer(
         for (command in viewModel.renderState.value.drawCommands) {
             command.cube.draw(command.mvpMatrix)
         }
+
+        viewModel.advanceFrame()
     }
 }
