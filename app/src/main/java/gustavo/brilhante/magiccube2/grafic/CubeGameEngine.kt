@@ -2,6 +2,18 @@ package gustavo.brilhante.magiccube2.grafic
 
 data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
 
+/**
+ * Encapsulates the state of an in-progress or idle slice rotation.
+ * @param activeSlice  Which slice is rotating. [ActiveSlice.NONE] = no active rotation.
+ * @param direction    Rotation direction: 1 or -1.
+ * @param isAnimating  Whether a rotation is currently being animated.
+ */
+data class RotationState(
+    val activeSlice: ActiveSlice = ActiveSlice.NONE,
+    val direction: Int = -1,
+    val isAnimating: Boolean = true
+)
+
 class CubeGameEngine(shuffleCount: Int) {
 
     // --- Cube objects ---
@@ -11,9 +23,7 @@ class CubeGameEngine(shuffleCount: Int) {
     val pos: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
 
     // --- Rotation state ---
-    @Volatile var rot: Int = 20
-    @Volatile var sense: Int = -1
-    @Volatile var rotating: Boolean = true
+    @Volatile var rotation: RotationState = RotationState()
     var rotatedAngle: Float = 0f
 
     // --- Shuffle state ---
@@ -35,6 +45,15 @@ class CubeGameEngine(shuffleCount: Int) {
     private val eixoy = intArrayOf(0, 1, 2, 3)
     private val eixoz = intArrayOf(1, 5, 3, 4)
     private val eixox = intArrayOf(0, 4, 2, 5)
+
+    private val shuffleableSlices = listOf(
+        ActiveSlice.ROTATION_AXIS_Z_0,
+        ActiveSlice.ROTATION_AXIS_Z_2,
+        ActiveSlice.ROTATION_AXIS_Y_0,
+        ActiveSlice.ROTATION_AXIS_Y_2,
+        ActiveSlice.ROTATION_AXIS_X_0,
+        ActiveSlice.ROTATION_AXIS_X_2
+    )
 
     init {
         initCubes()
@@ -86,61 +105,51 @@ class CubeGameEngine(shuffleCount: Int) {
     fun rotateClosestSideToScreen(rotationSense: Int = 1) {
         val indexMin = cubeSide.withIndex().minByOrNull { it.value.z }?.index ?: -1
         if (indexMin >= 0) {
-            rot = cubeSideIndex[indexMin].second.rotation
-            sense = rotationSense * cubeSideIndex[indexMin].second.orientation
+            rotation = rotation.copy(
+                activeSlice = cubeSideIndex[indexMin].second.rotation,
+                direction = rotationSense * cubeSideIndex[indexMin].second.orientation
+            )
         }
     }
 
     /** Corrects angle sign at the start of each frame before rendering. */
     fun prepareFrameRotation() {
-        if (rotatedAngle >= 0 && sense == -1) {
-            rotatedAngle *= -1f
-        }
+        if (rotatedAngle >= 0 && rotation.direction == -1) rotatedAngle *= -1f
     }
 
-    /** Advances game state after rendering. Returns true if a rotation just completed. */
-    fun postFrameAdvance(): Boolean {
+    /** Advances game state after rendering. */
+    fun postFrameAdvance() {
         if (rotatedAngle == 90f || rotatedAngle == -90f) {
             rotatedAngle = 0f
             save()
             handlePostRotation()
-            return true
+            return
         }
-        if (rotating) {
+        if (rotation.isAnimating) {
             if (rotatedAngle >= 0) rotatedAngle += 9f
             else rotatedAngle -= 9f
         }
-        return false
     }
 
     private fun handlePostRotation() {
         if (!embaralhando) {
-            rotating = false
-            rot = 20
+            rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
         } else {
-            rot = ((Math.random() * 10000) % 12).toInt() - 6
-            if (rot < 0) {
-                rot++
-                rot = -rot
-                sense = -1
-            } else {
-                sense = 1
-            }
+            val newDirection = if (Math.random() < 0.5) 1 else -1
+            rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection)
             cont++
             if (cont == numEmbaralhar) {
                 embaralhando = false
-                rotating = false
-                rot = 20
+                rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
             }
         }
     }
 
     // --- Private helpers ---
 
-    /** Returns the slice index (0, 1, or 2) for the current rotation. */
-    private fun computeSliceIndex(): Int = when (rot) {
-        6, 7, 8 -> 1
-        1, 3, 5 -> 2
+    private fun computeSliceIndex(): Int = when (rotation.activeSlice) {
+        ActiveSlice.ROTATION_AXIS_Z_1, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_X_1 -> 1
+        ActiveSlice.ROTATION_AXIS_Z_2, ActiveSlice.ROTATION_AXIS_Y_2, ActiveSlice.ROTATION_AXIS_X_2 -> 2
         else -> 0
     }
 
@@ -166,15 +175,15 @@ class CubeGameEngine(shuffleCount: Int) {
     }
 
     private fun saveRot(cubo: Int) {
-        val eixo = when {
-            rot == 0 || rot == 1 || rot == 6 -> eixoy
-            rot == 2 || rot == 3 || rot == 7 -> eixoz
+        val eixo = when (rotation.activeSlice) {
+            ActiveSlice.ROTATION_AXIS_Z_0, ActiveSlice.ROTATION_AXIS_Z_1, ActiveSlice.ROTATION_AXIS_Z_2 -> eixoy
+            ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 -> eixoz
             else -> eixox
         }
         var cor2 = ColorLetter.BLACK
         for (q in 0..3) {
             val t1: Int; val t2: Int; val indice: Int
-            if (sense == 1) { t1 = 0; t2 = 1; indice = q }
+            if (rotation.direction == 1) { t1 = 0; t2 = 1; indice = q }
             else { t1 = 3; t2 = 0; indice = (3 - q) }
 
             val cor1 = if (q == 0) getColor(cubo, eixo[indice]) else cor2
@@ -186,11 +195,11 @@ class CubeGameEngine(shuffleCount: Int) {
     private fun save() {
         val n2 = computeSliceIndex()
 
-        if (rot == 0 || rot == 1 || rot == 6) {
+        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Z_1) {
             repeat(2) { pass ->
                 var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
                 for (s2 in 0 until 8) {
-                    aux1 = if (sense == 1) {
+                    aux1 = if (rotation.direction == 1) {
                         if (s2 == 0) pos[j2][n2][i2] else aux2
                     } else {
                         if (s2 == 0) pos[i2][n2][j2] else aux2
@@ -199,7 +208,7 @@ class CubeGameEngine(shuffleCount: Int) {
                     else if (j2 == 2 && i2 != 0) i2--
                     else if (i2 == 2 && j2 != 2) j2++
                     else if (j2 == 0 && i2 != 2) i2++
-                    if (sense == 1) {
+                    if (rotation.direction == 1) {
                         aux2 = pos[j2][n2][i2]; pos[j2][n2][i2] = aux1
                     } else {
                         aux2 = pos[i2][n2][j2]; pos[i2][n2][j2] = aux1
@@ -208,11 +217,11 @@ class CubeGameEngine(shuffleCount: Int) {
                 }
             }
         }
-        if (rot == 2 || rot == 3 || rot == 7) {
+        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_Y_1) {
             repeat(2) { pass ->
                 var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
                 for (s2 in 0 until 8) {
-                    aux1 = if (sense == 1) {
+                    aux1 = if (rotation.direction == 1) {
                         if (s2 == 0) pos[j2][i2][n2] else aux2
                     } else {
                         if (s2 == 0) pos[i2][j2][n2] else aux2
@@ -221,7 +230,7 @@ class CubeGameEngine(shuffleCount: Int) {
                     else if (j2 == 2 && i2 != 0) i2--
                     else if (i2 == 2 && j2 != 2) j2++
                     else if (j2 == 0 && i2 != 2) i2++
-                    if (sense == 1) {
+                    if (rotation.direction == 1) {
                         aux2 = pos[j2][i2][n2]; pos[j2][i2][n2] = aux1
                     } else {
                         aux2 = pos[i2][j2][n2]; pos[i2][j2][n2] = aux1
@@ -230,11 +239,11 @@ class CubeGameEngine(shuffleCount: Int) {
                 }
             }
         }
-        if (rot == 4 || rot == 5 || rot == 8) {
+        if (rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_0 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_2 || rotation.activeSlice == ActiveSlice.ROTATION_AXIS_X_1) {
             repeat(2) { pass ->
                 var i2 = 0; var j2 = 0; var aux1 = 0; var aux2 = 0
                 for (s2 in 0 until 8) {
-                    aux1 = if (sense == 1) {
+                    aux1 = if (rotation.direction == 1) {
                         if (s2 == 0) pos[n2][j2][i2] else aux2
                     } else {
                         if (s2 == 0) pos[n2][i2][j2] else aux2
@@ -243,7 +252,7 @@ class CubeGameEngine(shuffleCount: Int) {
                     else if (j2 == 2 && i2 != 0) i2--
                     else if (i2 == 2 && j2 != 2) j2++
                     else if (j2 == 0 && i2 != 2) i2++
-                    if (sense == 1) {
+                    if (rotation.direction == 1) {
                         aux2 = pos[n2][j2][i2]; pos[n2][j2][i2] = aux1
                     } else {
                         aux2 = pos[n2][i2][j2]; pos[n2][i2][j2] = aux1
