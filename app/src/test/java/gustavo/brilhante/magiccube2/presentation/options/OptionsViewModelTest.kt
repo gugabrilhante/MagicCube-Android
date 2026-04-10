@@ -1,7 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.options
 
 import gustavo.brilhante.magiccube2.domain.CubeSettings
-import gustavo.brilhante.magiccube2.domain.usecase.LoadSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
 import gustavo.brilhante.magiccube2.testutil.FakeSettingsRepository
@@ -10,7 +9,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,19 +26,12 @@ class OptionsViewModelTest {
     fun setUp() {
         fakeRepository = FakeSettingsRepository()
         viewModel = OptionsViewModel(
-            loadSettings = LoadSettingsUseCase(fakeRepository),
             saveSettings = SaveSettingsUseCase(fakeRepository),
             observeSettings = ObserveSettingsUseCase(fakeRepository),
         )
     }
 
     // --- Init ---
-
-    @Test
-    fun `load is called on init`() = runTest {
-        advanceUntilIdle()
-        assertTrue(fakeRepository.loadCalled)
-    }
 
     @Test
     fun `initial uiState matches defaults`() {

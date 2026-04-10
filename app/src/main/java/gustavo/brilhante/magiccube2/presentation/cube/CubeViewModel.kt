@@ -4,7 +4,6 @@ import android.opengl.Matrix
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
-import gustavo.brilhante.magiccube2.domain.usecase.LoadSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.ActiveSlice
 import gustavo.brilhante.magiccube2.grafic.CubeAxis
@@ -16,12 +15,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 class CubeViewModel(
     observeSettings: ObserveSettingsUseCase,
-    private val loadSettings: LoadSettingsUseCase,
 ) : ViewModel() {
 
     private val settingsState: StateFlow<CubeSettings> = observeSettings()
@@ -32,10 +29,6 @@ class CubeViewModel(
     // Note: engine shuffle is set from the cached value at construction; persisted value
     // takes effect on the next launch once the ViewModel is recreated.
     val engine = CubeGameEngine(settings.shuffle)
-
-    init {
-        viewModelScope.launch { loadSettings() }
-    }
 
     // --- Render state exposed to CubeRenderer ---
     private val _renderState = MutableStateFlow(CubeRenderState())
