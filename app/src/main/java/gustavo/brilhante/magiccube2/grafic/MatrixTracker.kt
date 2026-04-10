@@ -35,6 +35,12 @@ class MatrixTracker {
     fun getY(): Float = current[13]
     fun getX(): Float = current[12]
 
+    fun getMatrix(): FloatArray {
+        val copy = FloatArray(16)
+        System.arraycopy(current, 0, copy, 0, 16)
+        return copy
+    }
+
     fun reset() {
         Matrix.setIdentityM(current, 0)
         stack.clear()

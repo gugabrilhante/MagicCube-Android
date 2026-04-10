@@ -5,14 +5,12 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -146,23 +144,6 @@ fun MagicCubeButton(
             .shadow(4.dp, RoundedCornerShape(8.dp))
             .background(Color.LightGray)
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            // Mini cubo colorido à esquerda
-            Canvas(modifier = Modifier.size(24.dp)) {
-                val cubeColors = listOf(Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.White, Color(0xFFFFA500))
-                drawRect(color = cubeColors.random())
-            }
-
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = text,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black
-            )
-        }
+        CubeSectionTitle(text = text)
     }
 }
