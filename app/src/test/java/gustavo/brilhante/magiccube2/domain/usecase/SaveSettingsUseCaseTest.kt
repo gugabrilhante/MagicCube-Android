@@ -20,13 +20,13 @@ class SaveSettingsUseCaseTest {
     }
 
     @Test
-    fun `invoke updates current in repository`() = runTest {
+    fun `invoke updates repository state`() = runTest {
         val repository = FakeSettingsRepository()
         val useCase = SaveSettingsUseCase(repository)
         val settings = CubeSettings(shuffle = 3, speed = 9, size = 1)
 
         useCase(settings)
 
-        assertEquals(settings, repository.current)
+        assertEquals(settings, repository.getCurrent())
     }
 }

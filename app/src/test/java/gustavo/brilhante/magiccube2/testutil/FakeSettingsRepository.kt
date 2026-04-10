@@ -13,7 +13,8 @@ class FakeSettingsRepository(
     private val _settings = MutableStateFlow(initial)
 
     override val settingsFlow: StateFlow<CubeSettings> = _settings.asStateFlow()
-    override val current: CubeSettings get() = _settings.value
+
+    override suspend fun getCurrent(): CubeSettings = _settings.value
 
     var lastSaved: CubeSettings? = null
 

@@ -5,6 +5,7 @@ import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 
 class SettingsRepositoryImpl(
@@ -19,7 +20,7 @@ class SettingsRepositoryImpl(
             initialValue = CubeSettings()
         )
 
-    override val current: CubeSettings get() = settingsFlow.value
+    override suspend fun getCurrent(): CubeSettings = dataSource.settingsFlow.first()
 
     override suspend fun save(settings: CubeSettings) {
         dataSource.save(settings)

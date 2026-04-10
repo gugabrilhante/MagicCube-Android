@@ -5,6 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 
 interface SettingsRepository {
     val settingsFlow: StateFlow<CubeSettings>
-    val current: CubeSettings
+    suspend fun getCurrent(): CubeSettings
     suspend fun save(settings: CubeSettings)
 }
