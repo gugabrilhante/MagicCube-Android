@@ -20,7 +20,7 @@ class OptionsViewModel(
 
     val uiState: StateFlow<OptionsUiState> = observeSettings()
         .map { it.toUiState() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), OptionsUiState())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, OptionsUiState())
 
     init {
         viewModelScope.launch { loadSettings() }

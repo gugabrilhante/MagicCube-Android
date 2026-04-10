@@ -7,7 +7,6 @@ import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
 import gustavo.brilhante.magiccube2.testutil.FakeSettingsRepository
 import gustavo.brilhante.magiccube2.testutil.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -50,8 +49,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `uiState reflects persisted settings after repository emits`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         fakeRepository.emit(CubeSettings(shuffle = 8, speed = 2, size = 7))
         advanceUntilIdle()
 
@@ -62,8 +59,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `increaseShuffle increments shuffle by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.increaseShuffle()
         advanceUntilIdle()
 
@@ -72,8 +67,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `decreaseShuffle decrements shuffle by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.decreaseShuffle()
         advanceUntilIdle()
 
@@ -82,8 +75,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `shuffle is clamped to max 10`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.increaseShuffle() }
         advanceUntilIdle()
 
@@ -92,8 +83,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `shuffle is clamped to min 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.decreaseShuffle() }
         advanceUntilIdle()
 
@@ -104,8 +93,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `increaseSpeed increments speed by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.increaseSpeed()
         advanceUntilIdle()
 
@@ -114,8 +101,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `decreaseSpeed decrements speed by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.decreaseSpeed()
         advanceUntilIdle()
 
@@ -124,8 +109,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `speed is clamped to max 10`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.increaseSpeed() }
         advanceUntilIdle()
 
@@ -134,8 +117,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `speed is clamped to min 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.decreaseSpeed() }
         advanceUntilIdle()
 
@@ -146,8 +127,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `increaseSize increments size by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.increaseSize()
         advanceUntilIdle()
 
@@ -156,8 +135,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `decreaseSize decrements size by 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.decreaseSize()
         advanceUntilIdle()
 
@@ -166,8 +143,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `size is clamped to max 10`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.increaseSize() }
         advanceUntilIdle()
 
@@ -176,8 +151,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `size is clamped to min 1`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         repeat(20) { viewModel.decreaseSize() }
         advanceUntilIdle()
 
@@ -188,8 +161,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `updateState persists new settings to repository`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.increaseShuffle()
         advanceUntilIdle()
 
@@ -198,8 +169,6 @@ class OptionsViewModelTest {
 
     @Test
     fun `multiple updates apply sequentially`() = runTest {
-        backgroundScope.launch { viewModel.uiState.collect {} }
-
         viewModel.increaseShuffle()
         viewModel.increaseShuffle()
         viewModel.increaseSpeed()

@@ -2,12 +2,15 @@ package gustavo.brilhante.magiccube2.domain.usecase
 
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import gustavo.brilhante.magiccube2.testutil.FakeSettingsRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ObserveSettingsUseCaseTest {
 
     @Test
@@ -31,6 +34,7 @@ class ObserveSettingsUseCaseTest {
         val job = launch { useCase().collect { emitted.add(it) } }
 
         repository.emit(updated)
+        advanceUntilIdle()
         job.cancel()
 
         assertEquals(updated, emitted.last())

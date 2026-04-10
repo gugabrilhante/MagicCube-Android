@@ -1,16 +1,19 @@
 package gustavo.brilhante.magiccube2.data
 
 import gustavo.brilhante.magiccube2.domain.CubeSettings
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsRepositoryTest {
 
     @Test
@@ -75,6 +78,7 @@ class SettingsRepositoryTest {
         val job = launch { repository.settingsFlow.collect { emitted.add(it) } }
 
         repository.save(newSettings)
+        advanceUntilIdle()
         job.cancel()
 
         assertEquals(newSettings, emitted.last())
