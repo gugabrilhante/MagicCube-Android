@@ -10,16 +10,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-private val cubeColors = listOf(
-    Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.White, Color(0xFFFFA500)
-)
+import gustavo.brilhante.magiccube2.R
 
 @Composable
 fun CubeSectionTitle(text: String, modifier: Modifier = Modifier) {
+    val cubeColors = listOf(
+        colorResource(R.color.cube_red),
+        colorResource(R.color.cube_blue),
+        colorResource(R.color.cube_yellow),
+        colorResource(R.color.cube_green),
+        colorResource(R.color.cube_white),
+        colorResource(R.color.cube_orange)
+    )
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
@@ -31,7 +37,8 @@ fun CubeSectionTitle(text: String, modifier: Modifier = Modifier) {
         Text(
             text = text,
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
         )
     }
 }
