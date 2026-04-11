@@ -4,7 +4,7 @@ An interactive 3D Rubik's Cube simulator for Android, built with modern Android 
 
 ## Demo
 
-https://github.com/gugabrilhante/MagicCube-Android/issues/2
+| ![Options](docs/magic_cube_options.gif) | ![Game play](docs/magic_cube_options.gif) |
 
 > Rotate the cube freely with drag gestures. Swipe to rotate individual face slices. Shuffle and solve at your own pace.
 

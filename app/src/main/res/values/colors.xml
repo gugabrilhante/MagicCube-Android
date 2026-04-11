@@ -3,4 +3,12 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <!-- Magic Cube face colors -->
+    <color name="cube_red">#FF0000</color>
+    <color name="cube_yellow">#FFFF00</color>
+    <color name="cube_blue">#0000FF</color>
+    <color name="cube_green">#00FF00</color>
+    <color name="cube_white">#FFFFFF</color>
+    <color name="cube_orange">#FFA500</color>
 </resources>

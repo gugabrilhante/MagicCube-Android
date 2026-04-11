@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,7 +22,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -66,32 +69,47 @@ fun OptionsScreen(
                 }
             }
 
-            SettingRow(
-                label = stringResource(R.string.shuffle),
-                value = "${state.shuffleDisplay}",
-                onIncrease = viewModel::increaseShuffle,
-                onDecrease = viewModel::decreaseShuffle
-            )
-            SettingRow(
-                label = stringResource(R.string.speed),
-                value = "${state.speed}",
-                onIncrease = viewModel::increaseSpeed,
-                onDecrease = viewModel::decreaseSpeed
-            )
-            SettingRow(
-                label = stringResource(R.string.size),
-                value = "${state.size}",
-                onIncrease = viewModel::increaseSize,
-                onDecrease = viewModel::decreaseSize
-            )
+            MagicCubeCard {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    SettingRow(
+                        label = stringResource(R.string.shuffle),
+                        value = "${state.shuffleDisplay}",
+                        onIncrease = viewModel::increaseShuffle,
+                        onDecrease = viewModel::decreaseShuffle
+                    )
+                    SettingRow(
+                        label = stringResource(R.string.speed),
+                        value = "${state.speed}",
+                        onIncrease = viewModel::increaseSpeed,
+                        onDecrease = viewModel::decreaseSpeed
+                    )
+                    SettingRow(
+                        label = stringResource(R.string.size),
+                        value = "${state.size}",
+                        onIncrease = viewModel::increaseSize,
+                        onDecrease = viewModel::decreaseSize
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-            MagicCubeButton(
-                text = stringResource(R.string.reset_to_default),
-                onClick = viewModel::resetSettings,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
+                    MagicCubeButton(
+                        text = stringResource(R.string.reset_to_default),
+                        onClick = viewModel::resetSettings,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .height(60.dp)
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                            .shadow(4.dp, RoundedCornerShape(8.dp))
+                            .background(Color.LightGray)
+                    )
+                }
+            }
         }
     }
 }
@@ -113,13 +131,13 @@ private fun SettingRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(onClick = onIncrease) {
-            Text(text = "+", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(text = "+", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colorResource(R.color.cube_blue))
         }
         IconButton(onClick = onDecrease) {
-            Text(text = "−", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+            Text(text = "−", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = colorResource(R.color.cube_red))
         }
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = label, fontSize = 18.sp, modifier = Modifier.weight(1f))
-        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text(text = label, fontSize = 18.sp, color = Color.Black, modifier = Modifier.weight(1f))
+        Text(text = value, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = Color.Black)
     }
 }
