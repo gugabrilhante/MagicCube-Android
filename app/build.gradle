@@ -46,6 +46,7 @@ dependencies {
     // Compose BOM + core
     implementation platform(libs.compose.bom)
     implementation libs.bundles.compose.core
+    implementation libs.compose.material.icons.core
     implementation libs.androidx.activity.compose
 
     // Koin

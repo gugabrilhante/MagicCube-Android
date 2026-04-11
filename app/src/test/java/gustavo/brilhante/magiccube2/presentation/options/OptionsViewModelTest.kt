@@ -148,6 +148,32 @@ class OptionsViewModelTest {
         assertEquals(1, viewModel.uiState.value.size)
     }
 
+    // --- Reset ---
+
+    @Test
+    fun `resetSettings saves default CubeSettings to repository`() = runTest {
+        viewModel.increaseShuffle()
+        viewModel.increaseSpeed()
+        advanceUntilIdle()
+
+        viewModel.resetSettings()
+        advanceUntilIdle()
+
+        assertEquals(CubeSettings(), fakeRepository.lastSaved)
+    }
+
+    @Test
+    fun `resetSettings restores uiState to defaults`() = runTest {
+        viewModel.increaseShuffle()
+        viewModel.increaseSpeed()
+        advanceUntilIdle()
+
+        viewModel.resetSettings()
+        advanceUntilIdle()
+
+        assertEquals(OptionsUiState(), viewModel.uiState.value)
+    }
+
     // --- Persistence ---
 
     @Test

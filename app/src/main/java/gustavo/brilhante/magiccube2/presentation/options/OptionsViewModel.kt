@@ -29,6 +29,8 @@ class OptionsViewModel(
     fun increaseSize() = updateState { it.copy(size = (it.size + 1).coerceAtMost(10)) }
     fun decreaseSize() = updateState { it.copy(size = (it.size - 1).coerceAtLeast(1)) }
 
+    fun resetSettings() = updateState { OptionsUiState() }
+
     private fun updateState(transform: (OptionsUiState) -> OptionsUiState) {
         viewModelScope.launch {
             saveSettings(transform(uiState.value).toSettings())
