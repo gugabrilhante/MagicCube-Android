@@ -12,6 +12,7 @@
         <activity
             android:name=".activity.MainMenuActivity"
             android:exported="true"
+            android:screenOrientation="sensorPortrait"
             android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
