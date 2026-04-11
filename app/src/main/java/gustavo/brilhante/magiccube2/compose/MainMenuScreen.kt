@@ -1,25 +1,19 @@
 package gustavo.brilhante.magiccube2.compose
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -44,7 +38,6 @@ fun MainMenuScreen(
     onOptionsClick: () -> Unit,
     onQuitClick: () -> Unit
 ) {
-    val context = LocalContext.current
     val cubeColors = listOf(Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.White, Color(0xFFFFA500),Color.Red, Color.Blue, Color(0xFFFFA500)) // 6 cores clássicas
 
     LaunchedEffect(Unit) {
@@ -125,25 +118,5 @@ fun MainMenuScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-fun MagicCubeButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(2.dp, Color.Gray),
-        modifier = Modifier
-            .height(60.dp)
-            .fillMaxWidth(0.8f)
-            .shadow(4.dp, RoundedCornerShape(8.dp))
-            .background(Color.LightGray)
-    ) {
-        CubeSectionTitle(text = text)
     }
 }

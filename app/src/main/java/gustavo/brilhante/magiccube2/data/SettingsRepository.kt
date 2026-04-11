@@ -1,18 +1,28 @@
 package gustavo.brilhante.magiccube2.data
 
 import gustavo.brilhante.magiccube2.domain.CubeSettings
-import kotlinx.coroutines.flow.MutableStateFlow
+import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 
-class SettingsRepository {
+class SettingsRepositoryImpl(
+    private val dataSource: SettingsLocalDataSource,
+    scope: CoroutineScope
+) : SettingsRepository {
 
-    private val _settings = MutableStateFlow(CubeSettings())
-    val settings: StateFlow<CubeSettings> = _settings.asStateFlow()
+    override val settingsFlow: StateFlow<CubeSettings> = dataSource.settingsFlow
+        .stateIn(
+            scope = scope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = CubeSettings()
+        )
 
-    val current: CubeSettings get() = _settings.value
+    override suspend fun getCurrent(): CubeSettings = dataSource.settingsFlow.first()
 
-    fun update(settings: CubeSettings) {
-        _settings.value = settings
+    override suspend fun save(settings: CubeSettings) {
+        dataSource.save(settings)
     }
 }

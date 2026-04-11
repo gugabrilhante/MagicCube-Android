@@ -1,19 +1,24 @@
 package gustavo.brilhante.magiccube2.presentation.options
 
 import androidx.lifecycle.ViewModel
-import gustavo.brilhante.magiccube2.data.SettingsRepository
+import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
-import kotlinx.coroutines.flow.MutableStateFlow
+import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
+import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class OptionsViewModel(private val repository: SettingsRepository) : ViewModel() {
+class OptionsViewModel(
+    private val saveSettings: SaveSettingsUseCase,
+    observeSettings: ObserveSettingsUseCase,
+) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(
-        repository.current.toUiState()
-    )
-    val uiState: StateFlow<OptionsUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<OptionsUiState> = observeSettings()
+        .map { it.toUiState() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, OptionsUiState())
 
     fun increaseShuffle() = updateState { it.copy(shuffle = (it.shuffle + 1).coerceAtMost(10)) }
     fun decreaseShuffle() = updateState { it.copy(shuffle = (it.shuffle - 1).coerceAtLeast(1)) }
@@ -24,9 +29,12 @@ class OptionsViewModel(private val repository: SettingsRepository) : ViewModel()
     fun increaseSize() = updateState { it.copy(size = (it.size + 1).coerceAtMost(10)) }
     fun decreaseSize() = updateState { it.copy(size = (it.size - 1).coerceAtLeast(1)) }
 
+    fun resetSettings() = updateState { OptionsUiState() }
+
     private fun updateState(transform: (OptionsUiState) -> OptionsUiState) {
-        _uiState.update(transform)
-        repository.update(_uiState.value.toSettings())
+        viewModelScope.launch {
+            saveSettings(transform(uiState.value).toSettings())
+        }
     }
 
     private fun CubeSettings.toUiState() = OptionsUiState(shuffle, speed, size)

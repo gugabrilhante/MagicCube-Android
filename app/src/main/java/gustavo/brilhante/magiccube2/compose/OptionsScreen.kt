@@ -48,36 +48,49 @@ fun OptionsScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            CubeSectionTitle(stringResource(R.string.como_jogar))
-            InfoText(stringResource(R.string.clique_na_tela_e_arraste_para_girar_o_cubo_por_inteiro))
-            InfoText(stringResource(R.string.swipe_quickly_to))
-            InfoText(stringResource(R.string.a_cor_do_bot_o_representa_o_quadrado_que_est_no_centro_da_face_a_ser_girada))
-            InfoText(stringResource(R.string.existem_bot_es_nas_duas_laterais_cada_lateral_indica_o_sentido_em_que_a_face_do_cubo_girar))
+            CollapsibleCard(title = stringResource(R.string.how_to_play)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InfoText(stringResource(R.string.tap_and_drag_hint))
+                    InfoText(stringResource(R.string.swipe_quickly_to))
+                }
+            }
 
-            CubeSectionTitle(stringResource(R.string.op_es))
-            InfoText(stringResource(R.string.quot_embaralhar_quot_indica_a_quantidade_de_giros_que_o_cubo_sofrer_para_ser_embaralhado_antes_de_o_jogo_iniciar))
-            InfoText(stringResource(R.string.quot_velocidade_quot_indica_a_velocidade_que_o_cubo_girar_quando_a_tela_for_tocada_e_arrastada))
-            InfoText(stringResource(R.string.quot_tamanho_quot_indica_o_tamanho_do_cubo_que_ser_exibido_na_tela))
-
-            Spacer(modifier = Modifier.height(8.dp))
+            CollapsibleCard(
+                title = stringResource(R.string.options_section),
+                initiallyExpanded = false
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    InfoText(stringResource(R.string.shuffle_description))
+                    InfoText(stringResource(R.string.speed_description))
+                    InfoText(stringResource(R.string.size_description))
+                }
+            }
 
             SettingRow(
-                label = stringResource(R.string.embaralhar),
+                label = stringResource(R.string.shuffle),
                 value = "${state.shuffleDisplay}",
                 onIncrease = viewModel::increaseShuffle,
                 onDecrease = viewModel::decreaseShuffle
             )
             SettingRow(
-                label = stringResource(R.string.velocidade),
+                label = stringResource(R.string.speed),
                 value = "${state.speed}",
                 onIncrease = viewModel::increaseSpeed,
                 onDecrease = viewModel::decreaseSpeed
             )
             SettingRow(
-                label = stringResource(R.string.tamanho),
+                label = stringResource(R.string.size),
                 value = "${state.size}",
                 onIncrease = viewModel::increaseSize,
                 onDecrease = viewModel::decreaseSize
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            MagicCubeButton(
+                text = stringResource(R.string.reset_to_default),
+                onClick = viewModel::resetSettings,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
         }
     }

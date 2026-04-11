@@ -46,13 +46,18 @@ dependencies {
     // Compose BOM + core
     implementation platform(libs.compose.bom)
     implementation libs.bundles.compose.core
+    implementation libs.compose.material.icons.core
     implementation libs.androidx.activity.compose
 
     // Koin
     implementation libs.bundles.koin
 
+    // DataStore
+    implementation libs.androidx.datastore.preferences
+
     // Testes
     testImplementation libs.junit
+    testImplementation libs.kotlinx.coroutines.test
     androidTestImplementation platform(libs.compose.bom)
     androidTestImplementation libs.compose.ui.test.junit4
 
