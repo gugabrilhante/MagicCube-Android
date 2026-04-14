@@ -3,8 +3,10 @@ package gustavo.brilhante.magiccube2.presentation
 import gustavo.brilhante.magiccube2.testutil.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -52,12 +54,21 @@ class MainMenuViewModelTest {
         val events = mutableListOf<MainMenuUiEvent>()
         val job = launch { viewModel.uiEvent.collect { events.add(it) } }
 
-        viewModel.onStartClick()
-        viewModel.onOptionsClick()
+        viewModel.onStartClick()   // 800ms delay
+        viewModel.onOptionsClick() // 600ms delay
+        
+        // Advance time enough for onOptionsClick (600ms) but not yet for onStartClick (800ms)
+        advanceTimeBy(700)
+        assertEquals(listOf(MainMenuUiEvent.NavigateToOptions), events)
+
+        // Advance time for the remaining onStartClick
         advanceUntilIdle()
 
-        assertTrue(events.contains(MainMenuUiEvent.NavigateToStart))
-        assertTrue(events.contains(MainMenuUiEvent.NavigateToOptions))
+        val expectedEvents = listOf(
+            MainMenuUiEvent.NavigateToOptions,
+            MainMenuUiEvent.NavigateToStart
+        )
+        assertEquals(expectedEvents, events)
         job.cancel()
     }
 

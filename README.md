@@ -87,7 +87,7 @@ app/
 | **Data** | Domain | Presentation, Graphics |
 | **Presentation** | Domain, Graphics (ICubeGameEngine) | Data (only through interfaces), Android Views |
 | **Navigation** | Presentation, Compose | Data, Graphics |
-| **Graphics** | Domain | Repository, DataStore |
+| **Graphics** | nothing | Repository, DataStore |
 
 ---
 
