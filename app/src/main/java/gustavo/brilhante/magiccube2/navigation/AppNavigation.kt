@@ -35,9 +35,17 @@ fun AppNavigation() {
     }
     val context = LocalContext.current
 
+    val handleBack: () -> Unit = {
+        if (backStack.size > 1) {
+            backStack.removeLastOrNull()
+        } else {
+            (context as? Activity)?.finish()
+        }
+    }
+
     NavDisplay(
         backStack = backStack,
-        onBack = { count -> repeat(count) { backStack.removeLastOrNull() } },
+        onBack = { count -> repeat(count) { handleBack() } },
         entryProvider = entryProvider {
             entry<AppRoute.MainMenu> {
                 MainMenuScreen(
@@ -48,7 +56,7 @@ fun AppNavigation() {
                 )
             }
             entry<AppRoute.Cube> {
-                CubeScreen(onBack = { backStack.removeLastOrNull() })
+                CubeScreen(onBack = handleBack)
             }
             entry<AppRoute.Options> {
                 OptionsScreen()
