@@ -1,6 +1,5 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import android.opengl.Matrix
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
@@ -11,6 +10,7 @@ import gustavo.brilhante.magiccube2.grafic.CubeAxis
 import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
 import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
+import gustavo.brilhante.magiccube2.grafic.MatrixMath
 import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -72,7 +72,7 @@ class CubeViewModel(
         val fov = 80.0f / 57.3f
         val size = zNear * tan(fov / 2.0).toFloat()
         val aspectRatio = width.toFloat() / height
-        Matrix.frustumM(projectionMatrix, 0, -size, size, -size / aspectRatio, size / aspectRatio, zNear, zFar)
+        MatrixMath.frustumM(projectionMatrix, 0, -size, size, -size / aspectRatio, size / aspectRatio, zNear, zFar)
     }
 
     // --- Called by CubeRenderer from onDrawFrame (GL thread) ---
@@ -212,7 +212,7 @@ class CubeViewModel(
 
     private fun computeMVP(): FloatArray {
         val mvp = FloatArray(16)
-        Matrix.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
+        MatrixMath.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
         return mvp
     }
 

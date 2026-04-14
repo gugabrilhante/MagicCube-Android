@@ -1,6 +1,5 @@
 package gustavo.brilhante.magiccube2.grafic
 
-import android.opengl.Matrix
 import java.util.Stack
 
 class MatrixTracker {
@@ -8,7 +7,7 @@ class MatrixTracker {
     private var current = FloatArray(16)
 
     init {
-        Matrix.setIdentityM(current, 0)
+        MatrixMath.setIdentityM(current, 0)
     }
 
     fun push() {
@@ -24,11 +23,11 @@ class MatrixTracker {
     }
 
     fun translate(x: Float, y: Float, z: Float) {
-        Matrix.translateM(current, 0, x, y, z)
+        MatrixMath.translateM(current, 0, x, y, z)
     }
 
     fun rotate(angle: Float, x: Float, y: Float, z: Float) {
-        Matrix.rotateM(current, 0, angle, x, y, z)
+        MatrixMath.rotateM(current, 0, angle, x, y, z)
     }
 
     fun getZ(): Float = current[14]
@@ -42,7 +41,7 @@ class MatrixTracker {
     }
 
     fun reset() {
-        Matrix.setIdentityM(current, 0)
+        MatrixMath.setIdentityM(current, 0)
         stack.clear()
     }
 }
