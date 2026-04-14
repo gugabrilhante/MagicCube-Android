@@ -10,6 +10,7 @@ koin = "4.1.1"
 junit = "4.13.2"
 datastore = "1.1.4"
 coroutines-test = "1.10.2"
+navigation3 = "1.0.0-alpha04"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -30,6 +31,8 @@ koin-compose = { group = "io.insert-koin", name = "koin-androidx-compose", versi
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines-test" }
+androidx-navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+androidx-navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
 
 [bundles]
 compose-core = ["compose-ui", "compose-ui-graphics", "compose-ui-tooling-preview", "compose-material3"]

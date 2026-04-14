@@ -3,9 +3,12 @@ package gustavo.brilhante.magiccube2.di
 import gustavo.brilhante.magiccube2.data.DataStoreSettingsDataSource
 import gustavo.brilhante.magiccube2.data.SettingsLocalDataSource
 import gustavo.brilhante.magiccube2.data.SettingsRepositoryImpl
+import gustavo.brilhante.magiccube2.domain.TimeProvider
 import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
+import gustavo.brilhante.magiccube2.grafic.CubeGameEngine
+import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
 import gustavo.brilhante.magiccube2.presentation.MainMenuViewModel
 import gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel
 import gustavo.brilhante.magiccube2.presentation.options.OptionsViewModel
@@ -29,6 +32,12 @@ val appModule = module {
     // Domain — use cases
     singleOf(::SaveSettingsUseCase)
     singleOf(::ObserveSettingsUseCase)
+
+    // Engine factory — creates ICubeGameEngine instances
+    single<CubeGameEngineFactory> { CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount) } }
+
+    // System utilities
+    single<TimeProvider> { TimeProvider { System.currentTimeMillis() } }
 
     // Presentation
     viewModelOf(::MainMenuViewModel)

@@ -4,11 +4,13 @@ import android.opengl.Matrix
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
+import gustavo.brilhante.magiccube2.domain.TimeProvider
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.ActiveSlice
 import gustavo.brilhante.magiccube2.grafic.CubeAxis
-import gustavo.brilhante.magiccube2.grafic.CubeGameEngine
+import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
 import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
+import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,9 +18,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlin.math.abs
+import kotlin.math.tan
 
 class CubeViewModel(
     observeSettings: ObserveSettingsUseCase,
+    engineFactory: CubeGameEngineFactory,
+    private val timeProvider: TimeProvider,
 ) : ViewModel() {
 
     private val settingsState: StateFlow<CubeSettings> = observeSettings()
@@ -26,9 +31,10 @@ class CubeViewModel(
 
     val settings: CubeSettings get() = settingsState.value
 
-    // Note: engine shuffle is set from the cached value at construction; persisted value
-    // takes effect on the next launch once the ViewModel is recreated.
-    val engine = CubeGameEngine(settings.shuffle)
+    // Engine is created via factory so it can be replaced with a test double in unit tests.
+    // The shuffle count is taken from the cached settings value at construction time; the
+    // persisted value takes effect on the next launch once the ViewModel is recreated.
+    val engine: ICubeGameEngine = engineFactory.create(settings.shuffle)
 
     // --- Render state exposed to CubeRenderer ---
     private val _renderState = MutableStateFlow(CubeRenderState())
@@ -45,8 +51,8 @@ class CubeViewModel(
     @Volatile var angleRotateY: Float = 0f
     @Volatile var isInertiaActive: Boolean = false
 
-    private var angleRotateXAux: Float = 0f
-    private var angleRotateYAux: Float = 0f
+    @Volatile private var angleRotateXAux: Float = 0f
+    @Volatile private var angleRotateYAux: Float = 0f
     private var inertiaInc: Float = 5f
 
     private var startX: Float = 0f
@@ -64,7 +70,7 @@ class CubeViewModel(
         val zNear = 0.1f
         val zFar = 1000f
         val fov = 80.0f / 57.3f
-        val size = zNear * Math.tan((fov / 2.0)).toFloat()
+        val size = zNear * tan(fov / 2.0).toFloat()
         val aspectRatio = width.toFloat() / height
         Matrix.frustumM(projectionMatrix, 0, -size, size, -size / aspectRatio, size / aspectRatio, zNear, zFar)
     }
@@ -172,13 +178,13 @@ class CubeViewModel(
         horizontalOrientation = if (y < screenHeight / 2) -1 else 1
         startX = x
         startY = y
-        startTime = System.currentTimeMillis()
+        startTime = timeProvider.currentTimeMillis()
     }
 
     fun onActionUp(x: Float, y: Float) {
         val dx = x - startX
         val dy = y - startY
-        val dt = System.currentTimeMillis() - startTime
+        val dt = timeProvider.currentTimeMillis() - startTime
 
         isInertiaActive = true
         inertiaInc = 5f
@@ -193,7 +199,7 @@ class CubeViewModel(
     }
 
     fun onActionMove(x: Float, y: Float, previousX: Float, previousY: Float) {
-        val dt = System.currentTimeMillis() - startTime
+        val dt = timeProvider.currentTimeMillis() - startTime
         if (getMovementType(dt, x - startX, y - startY) == MovementType.DRAG) {
             angleRotateXAux = angleRotateX
             angleRotateYAux = angleRotateY
@@ -260,7 +266,7 @@ class CubeViewModel(
         }
     }
 
-    private fun getMovementType(dt: Long, dx: Float, dy: Float): MovementType {
+    fun getMovementType(dt: Long, dx: Float, dy: Float): MovementType {
         val distThreshold = 100
         val timeThreshold = 250L
         return if (dt < timeThreshold) {
@@ -279,6 +285,6 @@ private data class RenderPosition(var x: Float = 0f, var y: Float = 0f, var z: F
     fun reset() { x = 0f; y = 0f; z = 0f }
 }
 
-private enum class MovementType {
+enum class MovementType {
     SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT, DRAG, NONE
 }

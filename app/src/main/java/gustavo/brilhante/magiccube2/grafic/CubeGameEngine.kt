@@ -16,17 +16,17 @@ data class RotationState(
     val isAnimating: Boolean = true
 )
 
-class CubeGameEngine(shuffleCount: Int) {
+class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
 
     // --- Cube objects ---
-    val cubes: MutableList<Cube> = mutableListOf()
+    override val cubes: MutableList<Cube> = mutableListOf()
 
     // --- Position grid: cubeGrid[x][z][y] = cubeIndex ---
-    val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
+    override val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
 
     // --- Rotation state ---
-    @Volatile var rotation: RotationState = RotationState()
-    var rotatedAngle: Float = 0f
+    @Volatile override var rotation: RotationState = RotationState()
+    override var rotatedAngle: Float = 0f
 
     // --- Shuffle state ---
     var isShuffling: Boolean = true
@@ -34,8 +34,8 @@ class CubeGameEngine(shuffleCount: Int) {
     var shuffleMovesCompleted: Int = 0
 
     // --- Face tracking for closest-side detection ---
-    val faceCenterPositions: Array<CubePosition> = Array(6) { CubePosition() }
-    val faceCenterCubes: List<Pair<Int, CubeSide>> = listOf(
+    override val faceCenterPositions: Array<CubePosition> = Array(6) { CubePosition() }
+    override val faceCenterCubes: List<Pair<Int, CubeSide>> = listOf(
         4 to CubeSide.YELLOW,
         10 to CubeSide.GREEN,
         12 to CubeSide.ORANGE,
@@ -105,7 +105,7 @@ class CubeGameEngine(shuffleCount: Int) {
 
     // --- Public API ---
 
-    fun rotateClosestSideToScreen(rotationSense: Int = 1) {
+    override fun rotateClosestSideToScreen(rotationSense: Int) {
         val closestFaceIndex = faceCenterPositions.withIndex().minByOrNull { it.value.z }?.index ?: -1
         if (closestFaceIndex >= 0) {
             rotation = rotation.copy(
@@ -116,12 +116,12 @@ class CubeGameEngine(shuffleCount: Int) {
     }
 
     /** Corrects angle sign at the start of each frame before rendering. */
-    fun prepareFrameRotation() {
+    override fun prepareFrameRotation() {
         if (rotatedAngle >= 0 && rotation.direction == -1) rotatedAngle *= -1f
     }
 
     /** Advances game state after rendering. */
-    fun postFrameAdvance() {
+    override fun postFrameAdvance() {
         if (rotatedAngle == 90f || rotatedAngle == -90f) {
             rotatedAngle = 0f
             commitSliceRotation()

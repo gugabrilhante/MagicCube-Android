@@ -36,8 +36,6 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-
     // Android base
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
@@ -51,6 +49,10 @@ dependencies {
 
     // Koin
     implementation libs.bundles.koin
+
+    // Navigation3
+    implementation libs.androidx.navigation3.runtime
+    implementation libs.androidx.navigation3.ui
 
     // DataStore
     implementation libs.androidx.datastore.preferences

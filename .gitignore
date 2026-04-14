@@ -35,3 +35,6 @@ gradle/wrapper/gradle-wrapper.jar
 
 # Other common files
 *.DS_Store
+
+# Claude Code — local session settings (não commitar)
+.claude/settings.local.json
