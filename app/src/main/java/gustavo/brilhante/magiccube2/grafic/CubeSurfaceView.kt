@@ -37,12 +37,12 @@ class CubeSurfaceView(
                 val metrics = Resources.getSystem().displayMetrics
                 val viewWidth = if (width > 0) width else metrics.widthPixels
                 val viewHeight = if (height > 0) height else metrics.heightPixels
-                
+
                 // Perform ray picking on the GL thread via the renderer
                 queueEvent {
                     renderer?.handleTouchPicking(x, y, viewWidth, viewHeight)
                 }
-                
+
                 viewModel.onActionDown(x, y, viewWidth, viewHeight)
             }
             MotionEvent.ACTION_UP -> viewModel.onActionUp(x, y)

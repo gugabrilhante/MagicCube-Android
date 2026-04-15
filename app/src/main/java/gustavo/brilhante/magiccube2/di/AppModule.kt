@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.di
 
+import android.os.SystemClock
 import gustavo.brilhante.magiccube2.data.DataStoreSettingsDataSource
 import gustavo.brilhante.magiccube2.data.SettingsLocalDataSource
 import gustavo.brilhante.magiccube2.data.SettingsRepositoryImpl
@@ -37,7 +38,7 @@ val appModule = module {
     single<CubeGameEngineFactory> { CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount) } }
 
     // System utilities
-    single<TimeProvider> { TimeProvider { System.currentTimeMillis() } }
+    single<TimeProvider> { TimeProvider { SystemClock.elapsedRealtime() } }
 
     // Presentation
     viewModelOf(::MainMenuViewModel)

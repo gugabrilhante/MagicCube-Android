@@ -1,17 +1,19 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import android.opengl.Matrix
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import gustavo.brilhante.magiccube2.domain.TimeProvider
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.ActiveSlice
+import gustavo.brilhante.magiccube2.grafic.Cube
 import gustavo.brilhante.magiccube2.grafic.CubeAxis
 import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
 import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
+import gustavo.brilhante.magiccube2.grafic.MatrixMath
 import gustavo.brilhante.magiccube2.grafic.MatrixTracker
+import gustavo.brilhante.magiccube2.grafic.PickingService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -46,6 +48,20 @@ class CubeViewModel(
     private val projectionMatrix = FloatArray(16)
     private val dist = 2.12f
 
+    // --- Picking & Drag state ---
+    private val pickingService = PickingService()
+    var selectedCubelet: Cube? = null
+        private set
+    var selectedFaceNormal: Triple<Float, Float, Float>? = null
+        private set
+    
+    // The vector representing the movement of the finger on the screen
+    private val _dragVector = MutableStateFlow(Triple(0f, 0f, 0f))
+    val dragVector: StateFlow<Triple<Float, Float, Float>> = _dragVector.asStateFlow()
+
+    private val _rotationAxis = MutableStateFlow(Triple(0f, 0f, 0f))
+    val rotationAxis: StateFlow<Triple<Float, Float, Float>> = _rotationAxis.asStateFlow()
+
     // --- Touch rotation (written by UI thread, read by GL thread) ---
     @Volatile var angleRotateX: Float = 0f
     @Volatile var angleRotateY: Float = 0f
@@ -72,7 +88,7 @@ class CubeViewModel(
         val fov = 80.0f / 57.3f
         val size = zNear * tan(fov / 2.0).toFloat()
         val aspectRatio = width.toFloat() / height
-        Matrix.frustumM(projectionMatrix, 0, -size, size, -size / aspectRatio, size / aspectRatio, zNear, zFar)
+        MatrixMath.frustumM(projectionMatrix, 0, -size, size, -size / aspectRatio, size / aspectRatio, zNear, zFar)
     }
 
     // --- Called by CubeRenderer from onDrawFrame (GL thread) ---
@@ -179,6 +195,14 @@ class CubeViewModel(
         startX = x
         startY = y
         startTime = timeProvider.currentTimeMillis()
+
+        // Ray picking logic
+        val drawCommands = _renderState.value.drawCommands
+        if (drawCommands.isNotEmpty()) {
+            val result = pickingService.pickCubelet(x, y, screenWidth, screenHeight, drawCommands)
+            selectedCubelet = result?.cubelet
+            selectedFaceNormal = result?.faceNormal
+        }
     }
 
     fun onActionUp(x: Float, y: Float) {
@@ -196,15 +220,55 @@ class CubeViewModel(
             MovementType.SWIPE_RIGHT -> triggerRotation(-1 * horizontalOrientation)
             else -> Unit
         }
+
+        // Reset picking and drag state
+        selectedCubelet = null
+        selectedFaceNormal = null
+        _dragVector.value = Triple(0f, 0f, 0f)
+        _rotationAxis.value = Triple(0f, 0f, 0f)
     }
 
     fun onActionMove(x: Float, y: Float, previousX: Float, previousY: Float) {
         val dt = timeProvider.currentTimeMillis() - startTime
-        if (getMovementType(dt, x - startX, y - startY) == MovementType.DRAG) {
-            angleRotateXAux = angleRotateX
-            angleRotateYAux = angleRotateY
-            angleRotateX += (x - previousX) * touchScaleFactor
-            angleRotateY += (y - previousY) * touchScaleFactor
+        val movementType = getMovementType(dt, x - startX, y - startY)
+
+        if (movementType == MovementType.DRAG) {
+            if (selectedCubelet == null) {
+                // No cubelet selected: rotate the entire cube
+                angleRotateXAux = angleRotateX
+                angleRotateYAux = angleRotateY
+                angleRotateX += (x - previousX) * touchScaleFactor
+                angleRotateY += (y - previousY) * touchScaleFactor
+            } else {
+                // Cubelet selected: project drag into the face's local coordinate system
+                processDragOnFace(x - previousX, y - previousY)
+            }
+        }
+    }
+
+    private fun processDragOnFace(dx: Float, dy: Float) {
+        val normal = selectedFaceNormal ?: return
+        
+        // Simplified projection: we interpret screen dx/dy as a 3D vector in the world space.
+        // Screen +X -> World +X, Screen +Y -> World -Y
+        val worldDx = dx
+        val worldDy = -dy
+        
+        // Project screen movement into the 3D plane defined by the selected face's normal.
+        val projectedX = if (abs(normal.first) > 0.5f) 0f else worldDx
+        val projectedY = if (abs(normal.second) > 0.5f) 0f else worldDy
+        val projectedZ = if (abs(normal.third) > 0.5f) 0f else 0f
+        
+        val currentDragVector = Triple(projectedX, projectedY, projectedZ)
+        _dragVector.value = currentDragVector
+
+        // Calculate rotation axis: cross product between normal and drag vector
+        // The rotation axis is perpendicular to both the face normal and the direction of movement.
+        val axis = MatrixMath.crossProduct(normal, currentDragVector)
+        _rotationAxis.value = MatrixMath.normalize(axis)
+        
+        if (abs(axis.first) > 0.1f || abs(axis.second) > 0.1f || abs(axis.third) > 0.1f) {
+            android.util.Log.d("CubeRotation", "Rotation Axis: ${_rotationAxis.value}")
         }
     }
 
@@ -212,7 +276,7 @@ class CubeViewModel(
 
     private fun computeMVP(): FloatArray {
         val mvp = FloatArray(16)
-        Matrix.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
+        MatrixMath.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
         return mvp
     }
 

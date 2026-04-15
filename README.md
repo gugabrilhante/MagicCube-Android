@@ -85,9 +85,9 @@ app/
 |---|---|---|
 | **Domain** | nothing | Android SDK, Retrofit, Room, Koin |
 | **Data** | Domain | Presentation, Graphics |
-| **Presentation** | Domain | Data (only through interfaces), Android Views |
+| **Presentation** | Domain, Graphics (ICubeGameEngine) | Data (only through interfaces), Android Views |
 | **Navigation** | Presentation, Compose | Data, Graphics |
-| **Graphics** | Domain (ICubeGameEngine) | Repository, DataStore |
+| **Graphics** | nothing | Repository, DataStore |
 
 ---
 

@@ -178,4 +178,27 @@ object MatrixMath {
 
         return true
     }
+
+    /**
+     * Calculates the cross product of two 3D vectors.
+     */
+    fun crossProduct(v1: Triple<Float, Float, Float>, v2: Triple<Float, Float, Float>): Triple<Float, Float, Float> {
+        return Triple(
+            v1.second * v2.third - v1.third * v2.second,
+            v1.third * v2.first - v1.first * v2.third,
+            v1.first * v2.second - v1.second * v2.first
+        )
+    }
+
+    /**
+     * Normalizes a 3D vector.
+     */
+    fun normalize(v: Triple<Float, Float, Float>): Triple<Float, Float, Float> {
+        val length = sqrt(v.first * v.first + v.second * v.second + v.third * v.third)
+        return if (length < 1e-6) {
+            Triple(0f, 0f, 0f)
+        } else {
+            Triple(v.first / length, v.second / length, v.third / length)
+        }
+    }
 }

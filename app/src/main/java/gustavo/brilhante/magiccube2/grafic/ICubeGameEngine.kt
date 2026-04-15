@@ -15,6 +15,9 @@ interface ICubeGameEngine {
     /** Select the visible face closest to the screen and queue its rotation. */
     fun rotateClosestSideToScreen(rotationSense: Int = 1)
 
+    /** Updates the rotation of a slice based on a drag gesture. */
+    fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>)
+
     /** Corrects the angle sign at the start of each frame. Called before rendering. */
     fun prepareFrameRotation()
 

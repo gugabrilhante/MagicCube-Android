@@ -4,7 +4,7 @@ import android.opengl.GLES30
 import android.opengl.GLSurfaceView
 import gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel
 import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
+import javax.microedition.khronos.opengles.GL1
 
 class CubeRenderer(
     private val viewModel: CubeViewModel

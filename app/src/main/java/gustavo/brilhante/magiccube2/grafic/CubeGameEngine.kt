@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import kotlin.math.abs
 import kotlin.random.Random
 
 data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
@@ -115,22 +116,81 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
         }
     }
 
+    override fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>) {
+        if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) return
+
+        // 1. Find cubelet position in grid
+        val cubeIdx = cubes.indexOf(cubelet)
+        var gridPos: Triple<Int, Int, Int>? = null
+        for (x in 0..2) for (z in 0..2) for (y in 0..2) {
+            if (cubeGrid[x][z][y] == cubeIdx) { gridPos = Triple(x, z, y); break }
+        }
+        val pos = gridPos ?: return
+
+        // 2. Map drag to slice rotation
+        val dx = dragVector.first
+        val dy = dragVector.second
+        val dz = dragVector.third
+
+        var targetSlice = ActiveSlice.NONE
+        var amount = 0f
+
+        if (abs(normal.third) > 0.5f) { // Front/Back
+            if (abs(dx) > abs(dy)) {
+                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+                amount = dx * normal.third
+            } else {
+                targetSlice = when(pos.third) { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
+                amount = dy * normal.third
+            }
+        } else if (abs(normal.first) > 0.5f) { // Right/Left
+            if (abs(dz) > abs(dy)) {
+                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+                amount = dz * -normal.first
+            } else {
+                targetSlice = when(pos.third) { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
+                amount = dy * -normal.first
+            }
+        } else if (abs(normal.second) > 0.5f) { // Up/Down
+            if (abs(dx) > abs(dz)) {
+                targetSlice = when(pos.first) { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
+                amount = dx * normal.second
+            } else {
+                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+                amount = dz * normal.second
+            }
+        }
+
+        if (targetSlice != ActiveSlice.NONE) {
+            rotation = rotation.copy(activeSlice = targetSlice, isAnimating = false)
+            rotatedAngle = amount * 0.5f
+        }
+    }
+
     /** Corrects angle sign at the start of each frame before rendering. */
     override fun prepareFrameRotation() {
+        if (!rotation.isAnimating) return // Don't snap while dragging
         if (rotatedAngle >= 0 && rotation.direction == -1) rotatedAngle *= -1f
     }
 
     /** Advances game state after rendering. */
     override fun postFrameAdvance() {
-        if (rotatedAngle == 90f || rotatedAngle == -90f) {
-            rotatedAngle = 0f
+        if (rotation.activeSlice != ActiveSlice.NONE && !rotation.isAnimating) return // Dragging
+
+        if (rotatedAngle >= 90f || rotatedAngle <= -90f) {
+            rotatedAngle = if (rotatedAngle >= 90f) 90f else -90f
             commitSliceRotation()
+            rotatedAngle = 0f
             handlePostRotation()
             return
         }
-        if (rotation.isAnimating) {
-            if (rotatedAngle >= 0) rotatedAngle += 9f
-            else rotatedAngle -= 9f
+        
+        if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) {
+            // Snap logic: if animation is on, move towards 90, -90 or 0
+            val step = 9f
+            if (rotatedAngle > 0) rotatedAngle += step
+            else if (rotatedAngle < 0) rotatedAngle -= step
+            else rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false)
         }
     }
 
@@ -199,16 +259,17 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
         getCell: (col: Int, row: Int) -> Int,
         setCell: (col: Int, row: Int, value: Int) -> Unit
     ) {
+        val dir = if (rotatedAngle >= 0) 1 else -1
         repeat(2) { iteration ->
             var row = 0; var col = 0
-            var current = if (rotation.direction == 1) getCell(col, row) else getCell(row, col)
+            var current = if (dir == 1) getCell(col, row) else getCell(row, col)
             repeat(8) {
                 val displaced = current
                 if (row == 0 && col != 0) col--
                 else if (col == 2) row--
                 else if (row == 2) col++
                 else if (col == 0) row++
-                if (rotation.direction == 1) {
+                if (dir == 1) {
                     current = getCell(col, row); setCell(col, row, displaced)
                 } else {
                     current = getCell(row, col); setCell(row, col, displaced)
