@@ -20,6 +20,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlin.math.tan
 
 class CubeViewModel(
@@ -50,10 +52,12 @@ class CubeViewModel(
 
     // --- Picking & Drag state ---
     private val pickingService = PickingService()
-    var selectedCubelet: Cube? = null
-        private set
-    var selectedFaceNormal: Triple<Float, Float, Float>? = null
-        private set
+
+    private val _selectedCubelet = MutableStateFlow<Cube?>(null)
+    val selectedCubelet: StateFlow<Cube?> = _selectedCubelet.asStateFlow()
+
+    private val _selectedFaceNormal = MutableStateFlow<Triple<Float, Float, Float>?>(null)
+    val selectedFaceNormal: StateFlow<Triple<Float, Float, Float>?> = _selectedFaceNormal.asStateFlow()
     
     // The vector representing the movement of the finger on the screen
     private val _dragVector = MutableStateFlow(Triple(0f, 0f, 0f))
@@ -61,6 +65,17 @@ class CubeViewModel(
 
     private val _rotationAxis = MutableStateFlow(Triple(0f, 0f, 0f))
     val rotationAxis: StateFlow<Triple<Float, Float, Float>> = _rotationAxis.asStateFlow()
+
+    // Accumulated rotation angle for the active slice drag, in degrees.
+    // Written on UI thread, read on GL thread via engine.rotatedAngle (@Volatile).
+    private var accumulatedDragAngle = 0f
+
+    companion object {
+        // 0.3 deg/px → dragging ~300 px rotates a slice by 90°.
+        private const val DRAG_TO_ANGLE_SCALE = 0.3f
+        // Drag must exceed this angle (degrees) for the slice to complete; below → cancel.
+        private const val SNAP_THRESHOLD = 30f
+    }
 
     // --- Touch rotation (written by UI thread, read by GL thread) ---
     @Volatile var angleRotateX: Float = 0f
@@ -196,13 +211,15 @@ class CubeViewModel(
         startY = y
         startTime = timeProvider.currentTimeMillis()
 
-        // Ray picking logic
+        // Ray picking: store selected cubelet and face on ACTION_DOWN
         val drawCommands = _renderState.value.drawCommands
         if (drawCommands.isNotEmpty()) {
             val result = pickingService.pickCubelet(x, y, screenWidth, screenHeight, drawCommands)
-            selectedCubelet = result?.cubelet
-            selectedFaceNormal = result?.faceNormal
+            _selectedCubelet.value = result?.cubelet
+            _selectedFaceNormal.value = result?.faceNormal
         }
+
+        accumulatedDragAngle = 0f
     }
 
     fun onActionUp(x: Float, y: Float) {
@@ -210,22 +227,42 @@ class CubeViewModel(
         val dy = y - startY
         val dt = timeProvider.currentTimeMillis() - startTime
 
-        isInertiaActive = true
-        inertiaInc = 5f
+        if (_selectedCubelet.value != null
+            && engine.rotation.activeSlice != ActiveSlice.NONE
+            && !engine.rotation.isAnimating
+        ) {
+            // Slice drag ended: decide snap direction then start easing animation.
+            // Past SNAP_THRESHOLD → complete to ±90°; below → cancel back to 0°.
+            val snapAngle = when {
+                engine.rotatedAngle >= SNAP_THRESHOLD  ->  90f
+                engine.rotatedAngle <= -SNAP_THRESHOLD -> -90f
+                else                                   ->   0f
+            }
+            engine.rotation = engine.rotation.copy(
+                isAnimating = true,
+                isDragSnap  = true,
+                snapTarget  = snapAngle,
+            )
+        } else {
+            // No slice drag: handle whole-cube swipe + inertia as before.
+            isInertiaActive = true
+            inertiaInc = 5f
 
-        when (getMovementType(dt, dx, dy)) {
-            MovementType.SWIPE_UP -> triggerRotation(-1 * verticalOrientation)
-            MovementType.SWIPE_DOWN -> triggerRotation(1 * verticalOrientation)
-            MovementType.SWIPE_LEFT -> triggerRotation(1 * horizontalOrientation)
-            MovementType.SWIPE_RIGHT -> triggerRotation(-1 * horizontalOrientation)
-            else -> Unit
+            when (getMovementType(dt, dx, dy)) {
+                MovementType.SWIPE_UP -> triggerRotation(-1 * verticalOrientation)
+                MovementType.SWIPE_DOWN -> triggerRotation(1 * verticalOrientation)
+                MovementType.SWIPE_LEFT -> triggerRotation(1 * horizontalOrientation)
+                MovementType.SWIPE_RIGHT -> triggerRotation(-1 * horizontalOrientation)
+                else -> Unit
+            }
         }
 
         // Reset picking and drag state
-        selectedCubelet = null
-        selectedFaceNormal = null
+        _selectedCubelet.value = null
+        _selectedFaceNormal.value = null
         _dragVector.value = Triple(0f, 0f, 0f)
         _rotationAxis.value = Triple(0f, 0f, 0f)
+        accumulatedDragAngle = 0f
     }
 
     fun onActionMove(x: Float, y: Float, previousX: Float, previousY: Float) {
@@ -233,43 +270,147 @@ class CubeViewModel(
         val movementType = getMovementType(dt, x - startX, y - startY)
 
         if (movementType == MovementType.DRAG) {
-            if (selectedCubelet == null) {
+            if (_selectedCubelet.value == null) {
                 // No cubelet selected: rotate the entire cube
                 angleRotateXAux = angleRotateX
                 angleRotateYAux = angleRotateY
                 angleRotateX += (x - previousX) * touchScaleFactor
                 angleRotateY += (y - previousY) * touchScaleFactor
             } else {
-                // Cubelet selected: project drag into the face's local coordinate system
-                processDragOnFace(x - previousX, y - previousY)
+                // Cubelet selected: project drag into face plane, then drive slice rotation.
+                val dx = x - previousX
+                val dy = y - previousY
+                processDragOnFace(dx, dy)
+                applySliceRotationFromDrag(dx, dy)
             }
         }
     }
 
+    /**
+     * Converts a screen-space drag delta (dx, dy) into a direction vector in the
+     * cubelet's local space, constrained to the plane of the selected face.
+     *
+     * Steps:
+     *  1. Derive the two tangent vectors that span the face plane (local space).
+     *  2. Project each tangent through the cube's current global rotation to get
+     *     its 2D screen-space direction.
+     *  3. Measure how much of (dx, dy) aligns with each tangent's screen direction.
+     *  4. Reconstruct the local-space drag as a weighted sum of the two tangents.
+     */
     private fun processDragOnFace(dx: Float, dy: Float) {
-        val normal = selectedFaceNormal ?: return
-        
-        // Simplified projection: we interpret screen dx/dy as a 3D vector in the world space.
-        // Screen +X -> World +X, Screen +Y -> World -Y
-        val worldDx = dx
-        val worldDy = -dy
-        
-        // Project screen movement into the 3D plane defined by the selected face's normal.
-        val projectedX = if (abs(normal.first) > 0.5f) 0f else worldDx
-        val projectedY = if (abs(normal.second) > 0.5f) 0f else worldDy
-        val projectedZ = if (abs(normal.third) > 0.5f) 0f else 0f
-        
-        val currentDragVector = Triple(projectedX, projectedY, projectedZ)
-        _dragVector.value = currentDragVector
+        val normal = _selectedFaceNormal.value ?: return
 
-        // Calculate rotation axis: cross product between normal and drag vector
-        // The rotation axis is perpendicular to both the face normal and the direction of movement.
-        val axis = MatrixMath.crossProduct(normal, currentDragVector)
-        _rotationAxis.value = MatrixMath.normalize(axis)
-        
-        if (abs(axis.first) > 0.1f || abs(axis.second) > 0.1f || abs(axis.third) > 0.1f) {
-            android.util.Log.d("CubeRotation", "Rotation Axis: ${_rotationAxis.value}")
+        val (t1, t2) = faceLocalTangents(normal)
+
+        // Project each local tangent into 2D screen space under the cube's current rotation.
+        val st1 = localToScreenSpace(t1)
+        val st2 = localToScreenSpace(t2)
+
+        // How much of the screen drag aligns with each tangent's screen projection.
+        val w1 = dx * st1.first + dy * st1.second
+        val w2 = dx * st2.first + dy * st2.second
+
+        // Reconstruct the drag direction in local space and normalize.
+        val localDrag = Triple(
+            t1.first * w1 + t2.first * w2,
+            t1.second * w1 + t2.second * w2,
+            t1.third * w1 + t2.third * w2,
+        )
+        _dragVector.value = MatrixMath.normalize(localDrag)
+
+        _rotationAxis.value = computeRotationAxis(normal, _dragVector.value)
+    }
+
+    /**
+     * Drives progressive slice rotation from a per-frame screen drag delta.
+     *
+     * The active slice is determined once (first non-trivial drag frame) and locked
+     * for the remainder of the gesture. Each subsequent frame accumulates the signed
+     * pixel delta and writes it directly to engine.rotatedAngle.
+     *
+     * postFrameAdvance honours isAnimating=false and does not advance the angle
+     * on its own, so the slice follows the finger exactly.
+     */
+    private fun applySliceRotationFromDrag(screenDx: Float, screenDy: Float) {
+        val cubelet = _selectedCubelet.value ?: return
+        val normal = _selectedFaceNormal.value ?: return
+
+        // Lock the active slice on the first drag frame; skip if already set.
+        if (engine.rotation.activeSlice == ActiveSlice.NONE) {
+            engine.updateRotationFromDrag(cubelet, normal, _dragVector.value)
         }
+        if (engine.rotation.activeSlice == ActiveSlice.NONE) return
+
+        // Project the screen delta onto each tangent's screen-space direction and
+        // pick the dominant one to obtain a signed pixel magnitude.
+        val (t1, t2) = faceLocalTangents(normal)
+        val st1 = localToScreenSpace(t1)
+        val st2 = localToScreenSpace(t2)
+        val w1 = screenDx * st1.first + screenDy * st1.second
+        val w2 = screenDx * st2.first + screenDy * st2.second
+        val signedDelta = if (abs(w1) >= abs(w2)) w1 else w2
+
+        // Accumulate and push to engine. 0.3 deg/px → 300 px ≈ 90°.
+        accumulatedDragAngle += signedDelta * DRAG_TO_ANGLE_SCALE
+        engine.rotatedAngle = accumulatedDragAngle
+    }
+
+    /**
+     * Computes the rotation axis for a face drag using the cross product.
+     *
+     * The axis is perpendicular to both the face normal and the drag direction,
+     * which is exactly the axis around which the slice would rotate.
+     *
+     * @param faceNormal Unit normal of the touched face (local space).
+     * @param drag       Normalized drag direction on the face plane (local space).
+     * @return           Normalized rotation axis, or zero vector if inputs are parallel.
+     */
+    private fun computeRotationAxis(
+        faceNormal: Triple<Float, Float, Float>,
+        drag: Triple<Float, Float, Float>,
+    ): Triple<Float, Float, Float> = MatrixMath.normalize(MatrixMath.crossProduct(faceNormal, drag))
+
+    /**
+     * Returns the two local-space tangent vectors that span the plane of [normal].
+     * Face normals from PickingService are always axis-aligned: (±1,0,0), (0,±1,0), (0,0,±1).
+     */
+    private fun faceLocalTangents(
+        normal: Triple<Float, Float, Float>
+    ): Pair<Triple<Float, Float, Float>, Triple<Float, Float, Float>> = when {
+        abs(normal.first) > 0.5f  -> Pair(Triple(0f, 1f, 0f), Triple(0f, 0f, 1f)) // ±X face
+        abs(normal.second) > 0.5f -> Pair(Triple(1f, 0f, 0f), Triple(0f, 0f, 1f)) // ±Y face
+        else                       -> Pair(Triple(1f, 0f, 0f), Triple(0f, 1f, 0f)) // ±Z face
+    }
+
+    /**
+     * Rotates a local-space vector by the cube's current global rotation and returns
+     * its 2D screen-space projection (screenX, screenY).
+     *
+     * Rotation order (matching buildFrame):
+     *  1. [angleRotateX] degrees around the Y axis
+     *  2. [angleRotateY] degrees around the X axis
+     *
+     * Screen Y is the inverse of world Y because screen +Y points down.
+     */
+    private fun localToScreenSpace(v: Triple<Float, Float, Float>): Pair<Float, Float> {
+        val radY = angleRotateX * (Math.PI / 180.0)
+        val cosY = cos(radY).toFloat()
+        val sinY = sin(radY).toFloat()
+
+        val radX = angleRotateY * (Math.PI / 180.0)
+        val cosX = cos(radX).toFloat()
+        val sinX = sin(radX).toFloat()
+
+        // Apply Y-axis rotation
+        val x1 = v.first * cosY + v.third * sinY
+        val y1 = v.second
+        val z1 = -v.first * sinY + v.third * cosY
+
+        // Apply X-axis rotation
+        val x2 = x1
+        val y2 = y1 * cosX - z1 * sinX
+
+        return Pair(x2, -y2) // screen Y is flipped
     }
 
     // --- Private: matrix helpers (GL thread) ---

@@ -35,9 +35,20 @@ class FakeCubeGameEngine : ICubeGameEngine {
     var postFrameAdvanceCallCount: Int = 0
         private set
 
+    var updateRotationFromDragCallCount: Int = 0
+        private set
+
     override fun rotateClosestSideToScreen(rotationSense: Int) {
         rotateClosestSideCallCount++
         lastRotationSense = rotationSense
+    }
+
+    override fun updateRotationFromDrag(
+        cubelet: Cube,
+        normal: Triple<Float, Float, Float>,
+        dragVector: Triple<Float, Float, Float>,
+    ) {
+        updateRotationFromDragCallCount++
     }
 
     override fun prepareFrameRotation() {

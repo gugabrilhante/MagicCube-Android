@@ -8,13 +8,18 @@ data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
 /**
  * Encapsulates the state of an in-progress or idle slice rotation.
  * @param activeSlice  Which slice is rotating. [ActiveSlice.NONE] = no active rotation.
- * @param direction    Rotation direction: 1 or -1.
+ * @param direction    Rotation direction: 1 or -1. Used only by shuffle/swipe animations.
  * @param isAnimating  Whether a rotation is currently being animated.
+ * @param isDragSnap   True when the animation was triggered by releasing a finger drag.
+ *                     Uses easing toward [snapTarget] instead of a fixed step.
+ * @param snapTarget   Target angle in degrees for drag-snap animations (90f, -90f, or 0f to cancel).
  */
 data class RotationState(
     val activeSlice: ActiveSlice = ActiveSlice.NONE,
     val direction: Int = -1,
-    val isAnimating: Boolean = true
+    val isAnimating: Boolean = true,
+    val isDragSnap: Boolean = false,
+    val snapTarget: Float = 90f,
 )
 
 class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
@@ -169,7 +174,8 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
 
     /** Corrects angle sign at the start of each frame before rendering. */
     override fun prepareFrameRotation() {
-        if (!rotation.isAnimating) return // Don't snap while dragging
+        if (!rotation.isAnimating) return // Don't correct while dragging
+        if (rotation.isDragSnap) return   // Drag snap: sign already correct from accumulation
         if (rotatedAngle >= 0 && rotation.direction == -1) rotatedAngle *= -1f
     }
 
@@ -184,22 +190,49 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
             handlePostRotation()
             return
         }
-        
+
         if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) {
-            // Snap logic: if animation is on, move towards 90, -90 or 0
-            val step = 9f
-            if (rotatedAngle > 0) rotatedAngle += step
-            else if (rotatedAngle < 0) rotatedAngle -= step
-            else rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false)
+            if (rotation.isDragSnap) {
+                advanceDragSnap()
+            } else {
+                // Shuffle / swipe: fixed step toward ±90°
+                val step = 9f
+                if (rotatedAngle > 0) rotatedAngle += step
+                else if (rotatedAngle < 0) rotatedAngle -= step
+                else rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false)
+            }
+        }
+    }
+
+    /**
+     * Easing animation for drag-snap.
+     * Interpolates rotatedAngle toward snapTarget each frame.
+     * snapTarget = 0f → snap back (cancel); ±90f → complete the rotation.
+     */
+    private fun advanceDragSnap() {
+        val target = rotation.snapTarget
+        val remaining = target - rotatedAngle
+
+        if (abs(remaining) <= SNAP_DONE_THRESHOLD) {
+            if (abs(target) < 1f) {
+                // Cancel: snap back to neutral without committing
+                rotatedAngle = 0f
+                rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false, isDragSnap = false)
+            } else {
+                // Force exactly ±90° so the commit guard triggers on next advance
+                rotatedAngle = target
+            }
+        } else {
+            rotatedAngle += remaining * SNAP_EASING
         }
     }
 
     private fun handlePostRotation() {
         if (!isShuffling) {
-            rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
+            rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE, isDragSnap = false)
         } else {
             val newDirection = if (Random.nextDouble() < 0.5) 1 else -1
-            rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection)
+            rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection, isDragSnap = false)
             shuffleMovesCompleted++
             if (shuffleMovesCompleted == totalShuffleMoves) {
                 isShuffling = false
@@ -299,5 +332,13 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
                 )
             ActiveSlice.NONE -> Unit
         }
+    }
+
+    companion object {
+        // Easing factor for drag-snap animation: rotatedAngle += remaining * SNAP_EASING each frame.
+        // 0.2 → ~15 frames to close 90° gap at 60 fps (~0.25 s).
+        private const val SNAP_EASING = 0.2f
+        // Stop easing and clamp to target when this close (degrees).
+        private const val SNAP_DONE_THRESHOLD = 1f
     }
 }
