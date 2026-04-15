@@ -19,14 +19,32 @@ class CubeSurfaceView(
 
     private var previousX = 0f
     private var previousY = 0f
+    private var renderer: CubeRenderer? = null
+
+    override fun setRenderer(renderer: Renderer) {
+        super.setRenderer(renderer)
+        if (renderer is CubeRenderer) {
+            this.renderer = renderer
+        }
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
         val y = event.y
-        val metrics = Resources.getSystem().displayMetrics
 
         when (event.action) {
-            MotionEvent.ACTION_DOWN -> viewModel.onActionDown(x, y, metrics.widthPixels, metrics.heightPixels)
+            MotionEvent.ACTION_DOWN -> {
+                val metrics = Resources.getSystem().displayMetrics
+                val viewWidth = if (width > 0) width else metrics.widthPixels
+                val viewHeight = if (height > 0) height else metrics.heightPixels
+                
+                // Perform ray picking on the GL thread via the renderer
+                queueEvent {
+                    renderer?.handleTouchPicking(x, y, viewWidth, viewHeight)
+                }
+                
+                viewModel.onActionDown(x, y, viewWidth, viewHeight)
+            }
             MotionEvent.ACTION_UP -> viewModel.onActionUp(x, y)
             MotionEvent.ACTION_MOVE -> viewModel.onActionMove(x, y, previousX, previousY)
         }
