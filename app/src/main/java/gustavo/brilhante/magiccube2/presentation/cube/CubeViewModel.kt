@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
@@ -7,8 +8,10 @@ import gustavo.brilhante.magiccube2.domain.TimeProvider
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.ActiveSlice
 import gustavo.brilhante.magiccube2.grafic.Cube
+import gustavo.brilhante.magiccube2.grafic.ColorLetter
 import gustavo.brilhante.magiccube2.grafic.CubeAxis
 import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
+import gustavo.brilhante.magiccube2.grafic.CubeSide
 import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.MatrixMath
@@ -217,6 +220,25 @@ class CubeViewModel(
             val result = pickingService.pickCubelet(x, y, screenWidth, screenHeight, drawCommands)
             _selectedCubelet.value = result?.cubelet
             _selectedFaceNormal.value = result?.faceNormal
+
+            if (result != null) {
+                val c = result.cubelet
+                Log.d("FacePicking", "Cubo menor selecionado")
+                Log.d("FacePicking", "frontSide=${c.getFrontSide().name} | backSide=${c.getBackSide().name}")
+                Log.d("FacePicking", "leftSide=${c.getLeftSide().name} | rightSide=${c.getRightSide().name}")
+                Log.d("FacePicking", "downSide=${c.getDownSide().name} | upperSide=${c.getUpperSide().name}")
+
+                val (nx, ny, nz) = result.faceNormal
+                val faceColor = when {
+                    nz >  0.5f -> c.getFrontSide()
+                    nz < -0.5f -> c.getBackSide()
+                    nx >  0.5f -> c.getRightSide()
+                    nx < -0.5f -> c.getLeftSide()
+                    ny >  0.5f -> c.getUpperSide()
+                    else       -> c.getDownSide()
+                }
+                Log.d("FacePicking", "face do cubo menor tocada: normal=(%.1f,%.1f,%.1f) cor=${faceColor.name}".format(nx, ny, nz))
+            }
         }
 
         accumulatedDragAngle = 0f
@@ -276,12 +298,69 @@ class CubeViewModel(
                 angleRotateYAux = angleRotateY
                 angleRotateX += (x - previousX) * touchScaleFactor
                 angleRotateY += (y - previousY) * touchScaleFactor
+                Log.d("FacePicking", "Cubo rotacao -> angleX(Y-axis)=%.1f | angleY(X-axis)=%.1f".format(angleRotateX, angleRotateY))
             } else {
                 // Cubelet selected: project drag into face plane, then drive slice rotation.
-                val dx = x - previousX
-                val dy = y - previousY
-                processDragOnFace(dx, dy)
-                applySliceRotationFromDrag(dx, dy)
+                // Convert screen-space drag to the cube's local space (inverse of the cube's
+                // global rotation) so the direction is consistent regardless of cube orientation.
+                val screenDx = x - previousX
+                val screenDy = y - previousY
+
+                val radY = angleRotateX * (Math.PI / 180.0)
+                val radX = angleRotateY * (Math.PI / 180.0)
+                val cosY = cos(radY).toFloat()
+                val sinY = sin(radY).toFloat()
+                val cosX = cos(radX).toFloat()
+                val sinX = sin(radX).toFloat()
+
+                // Undo X rotation then Y rotation: R_Y(-radY) * R_X(-radX) * (screenDx, -screenDy, 0)
+                val localDx = screenDx * cosY - screenDy * sinX * sinY
+                val localDy = screenDy * cosX
+
+                val wasSliceNone = engine.rotation.activeSlice == ActiveSlice.NONE
+
+                // Log drag direction and visible slices on the first drag frame
+                if (wasSliceNone) {
+                    val dragDir = when {
+                        abs(screenDx) >= abs(screenDy) -> if (screenDx > 0) "right" else "left"
+                        screenDy < 0 -> "up"
+                        else -> "down"
+                    }
+                    Log.d("FacePicking", "Direcao do drag: $dragDir (screenDx=%.1f screenDy=%.1f)".format(screenDx, screenDy))
+                    Log.d("FacePicking", "Faces visiveis: ${visibleFaceSlices()}")
+                }
+
+                processDragOnFace(localDx, localDy)
+                applySliceRotationFromDrag(localDx, localDy)
+
+                // Log active slice color, rotation axis/direction, and cube angles on first locked frame
+                if (wasSliceNone && engine.rotation.activeSlice != ActiveSlice.NONE) {
+                    val activeSlice = engine.rotation.activeSlice
+                    val cubeSide = CubeSide.entries.find { it.rotation == activeSlice }
+                    if (cubeSide != null) {
+                        val centerIndex = engine.faceCenterCubes.find { it.second == cubeSide }?.first
+                        val centerCube = centerIndex?.let { engine.cubes[it] }
+                        val sliceColor = centerCube?.let { cube ->
+                            listOf(
+                                cube.getFrontSide(), cube.getBackSide(),
+                                cube.getLeftSide(),  cube.getRightSide(),
+                                cube.getUpperSide(), cube.getDownSide()
+                            ).firstOrNull { it != ColorLetter.BLACK }?.name
+                        } ?: "desconhecida"
+                        Log.d("FacePicking", "Slice ativa: $sliceColor ($activeSlice)")
+                    } else {
+                        Log.d("FacePicking", "Slice ativa: sem cor - slice do meio ($activeSlice)")
+                    }
+
+                    val rotAxis = when {
+                        activeSlice.name.startsWith("ROTATION_AXIS_Z") -> "Y"
+                        activeSlice.name.startsWith("ROTATION_AXIS_Y") -> "Z"
+                        else                                            -> "X"
+                    }
+                    val rotDir = if (engine.rotatedAngle >= 0f) "positivo (+)" else "negativo (-)"
+                    Log.d("FacePicking", "Rotacao da slice: eixo=$rotAxis direcao=$rotDir (rotatedAngle=%.2f)".format(engine.rotatedAngle))
+                    Log.d("FacePicking", "Cubo maior: angleRotateX=%.1f | angleRotateY=%.1f".format(angleRotateX, angleRotateY))
+                }
             }
         }
     }
@@ -411,6 +490,36 @@ class CubeViewModel(
         val y2 = y1 * cosX - z1 * sinX
 
         return Pair(x2, -y2) // screen Y is flipped
+    }
+
+    /**
+     * Returns the names of the 6 face-slices currently visible to the camera.
+     *
+     * A face is visible when its world-space normal points toward the camera
+     * (camera sits at negative Z, so the condition is worldNormal.z > 0).
+     *
+     * World Z of a local normal (nx, ny, nz) after the cube's two global rotations:
+     *   z_world = ny·sinX + (−nx·sinY + nz·cosY)·cosX
+     */
+    private fun visibleFaceSlices(): List<String> {
+        val radY = angleRotateX * (Math.PI / 180.0)
+        val radX = angleRotateY * (Math.PI / 180.0)
+        val sinY = sin(radY).toFloat()
+        val cosY = cos(radY).toFloat()
+        val sinX = sin(radX).toFloat()
+        val cosX = cos(radX).toFloat()
+
+        fun worldZ(nx: Float, ny: Float, nz: Float): Float =
+            ny * sinX + (-nx * sinY + nz * cosY) * cosX
+
+        return buildList {
+            if (worldZ( 0f,  1f,  0f) > 0f) add(CubeSide.YELLOW.colorName) // top
+            if (worldZ( 0f, -1f,  0f) > 0f) add(CubeSide.WHITE.colorName)  // bottom
+            if (worldZ( 0f,  0f,  1f) > 0f) add(CubeSide.BLUE.colorName)   // front
+            if (worldZ( 0f,  0f, -1f) > 0f) add(CubeSide.GREEN.colorName)  // back
+            if (worldZ( 1f,  0f,  0f) > 0f) add(CubeSide.RED.colorName)    // right
+            if (worldZ(-1f,  0f,  0f) > 0f) add(CubeSide.ORANGE.colorName) // left
+        }
     }
 
     // --- Private: matrix helpers (GL thread) ---
