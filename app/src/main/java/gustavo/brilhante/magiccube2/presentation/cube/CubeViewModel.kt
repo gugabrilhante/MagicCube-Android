@@ -246,7 +246,7 @@ class CubeViewModel(
         } else {
             // No slice drag: handle whole-cube swipe + inertia as before.
             isInertiaActive = true
-            inertiaInc = 5f
+            inertiaInc = 1f
 
             when (getMovementType(dt, dx, dy)) {
                 MovementType.SWIPE_UP -> triggerRotation(-1 * verticalOrientation)

@@ -124,7 +124,7 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
     override fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>) {
         if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) return
 
-        // 1. Find cubelet position in grid
+        // 1. Find cubelet position in grid [x=col, z=height, y=depth]
         val cubeIdx = cubes.indexOf(cubelet)
         var gridPos: Triple<Int, Int, Int>? = null
         for (x in 0..2) for (z in 0..2) for (y in 0..2) {
@@ -132,44 +132,38 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
         }
         val pos = gridPos ?: return
 
-        // 2. Map drag to slice rotation
-        val dx = dragVector.first
-        val dy = dragVector.second
-        val dz = dragVector.third
+        // 2. Project drag onto face plane: Dp = D - (D·N)*N
+        val dot = dragVector.first * normal.first +
+                  dragVector.second * normal.second +
+                  dragVector.third * normal.third
+        val dp = Triple(
+            dragVector.first  - dot * normal.first,
+            dragVector.second - dot * normal.second,
+            dragVector.third  - dot * normal.third,
+        )
+        val dpLenSq = dp.first * dp.first + dp.second * dp.second + dp.third * dp.third
+        if (dpLenSq < 1e-6f) return
 
-        var targetSlice = ActiveSlice.NONE
-        var amount = 0f
+        // 3. Rotation axis = N × Dp (all vectors in local cube space)
+        val axis = MatrixMath.normalize(MatrixMath.crossProduct(normal, dp))
 
-        if (abs(normal.third) > 0.5f) { // Front/Back
-            if (abs(dx) > abs(dy)) {
-                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
-                amount = dx * normal.third
-            } else {
-                targetSlice = when(pos.third) { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
-                amount = dy * normal.third
-            }
-        } else if (abs(normal.first) > 0.5f) { // Right/Left
-            if (abs(dz) > abs(dy)) {
-                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
-                amount = dz * -normal.first
-            } else {
-                targetSlice = when(pos.third) { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
-                amount = dy * -normal.first
-            }
-        } else if (abs(normal.second) > 0.5f) { // Up/Down
-            if (abs(dx) > abs(dz)) {
-                targetSlice = when(pos.first) { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
-                amount = dx * normal.second
-            } else {
-                targetSlice = when(pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
-                amount = dz * normal.second
-            }
+        // 4. Snap to dominant axis component and select layer from cubelet position.
+        //    Grid layout: cubeGrid[x][z][y] where z=height(top/bottom), y=depth(front/back).
+        //    local X → ROTATION_AXIS_X  (col index = pos.first)
+        //    local Y → ROTATION_AXIS_Z  (height index = pos.second, since grid Z = vertical axis)
+        //    local Z → ROTATION_AXIS_Y  (depth index = pos.third, since grid Y = depth axis)
+        val ax = abs(axis.first)
+        val ay = abs(axis.second)
+        val az = abs(axis.third)
+
+        val targetSlice = when {
+            ax >= ay && ax >= az -> when (pos.first)  { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
+            ay >= ax && ay >= az -> when (pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+            else                 -> when (pos.third)  { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
         }
 
-        if (targetSlice != ActiveSlice.NONE) {
-            rotation = rotation.copy(activeSlice = targetSlice, isAnimating = false)
-            rotatedAngle = amount * 0.5f
-        }
+        rotation = rotation.copy(activeSlice = targetSlice, isAnimating = false)
+        rotatedAngle = 0f
     }
 
     /** Corrects angle sign at the start of each frame before rendering. */
@@ -276,10 +270,12 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
             ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 -> zAxisFaceCycle
             else -> xAxisFaceCycle
         }
+        // Use rotatedAngle sign (same as rotateSlice) so drag and non-drag paths stay consistent.
+        val dir = if (rotatedAngle >= 0) 1 else -1
         var nextColor = ColorLetter.BLACK
         for (i in 0..3) {
             val dirStart: Int; val dirStep: Int; val faceIndex: Int
-            if (rotation.direction == 1) { dirStart = 0; dirStep = 1; faceIndex = i }
+            if (dir == 1) { dirStart = 0; dirStep = 1; faceIndex = i }
             else { dirStart = 3; dirStep = 0; faceIndex = (3 - i) }
 
             val fromColor = if (i == 0) getFaceColor(cubeIdx, faceCycle[faceIndex]) else nextColor
