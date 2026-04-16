@@ -14,19 +14,8 @@ import gustavo.brilhante.magiccube2.compose.CubeScreen
 import gustavo.brilhante.magiccube2.compose.MainMenuScreen
 import gustavo.brilhante.magiccube2.compose.OptionsScreen
 
-/**
- * Root Navigation3 host. Manages the back stack using a [SnapshotStateList] of [AppRoute]
- * entries — no NavController, no fragments.
- *
- * We use [remember] + [toMutableStateList] (instead of [androidx.navigation3.runtime.rememberNavBackStack]) to avoid
- * adding the kotlinx-serialization plugin. As a trade-off the back stack is not restored
- * after process death, which is acceptable for this app.
- *
- * Destinations:
- *  - [AppRoute.MainMenu]  → [MainMenuScreen]
- *  - [AppRoute.Cube]      → [CubeScreen]  (OpenGL via AndroidView)
- *  - [AppRoute.Options]   → [OptionsScreen]
- */
+// Uses remember + toMutableStateList instead of rememberNavBackStack to avoid
+// the kotlinx-serialization plugin. Trade-off: back stack is not restored after process death.
 @Composable
 fun AppNavigation() {
     val backStack: SnapshotStateList<AppRoute> = remember {
@@ -44,7 +33,7 @@ fun AppNavigation() {
 
     NavDisplay(
         backStack = backStack,
-        onBack = { repeat(1) { handleBack() } },
+        onBack = { handleBack() },
         entryProvider = entryProvider {
             entry<AppRoute.MainMenu> {
                 MainMenuScreen(

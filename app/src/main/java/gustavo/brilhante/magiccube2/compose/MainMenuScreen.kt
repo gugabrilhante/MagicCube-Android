@@ -1,6 +1,5 @@
 package gustavo.brilhante.magiccube2.compose
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,13 +11,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -38,7 +35,7 @@ fun MainMenuScreen(
     onOptionsClick: () -> Unit,
     onQuitClick: () -> Unit
 ) {
-    val cubeColors = listOf(Color.Red, Color.Blue, Color.Yellow, Color.Green, Color.White, Color(0xFFFFA500),Color.Red, Color.Blue, Color(0xFFFFA500)) // 6 cores clássicas
+    val cubeColors by viewModel.cubeColors.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
@@ -78,21 +75,10 @@ fun MainMenuScreen(
 
                 Spacer(modifier = Modifier.height(96.dp))
 
-                // Cubo simples estilizado
-                Canvas(modifier = Modifier.size(200.dp)) {
-                    val cubeSize = size.minDimension / 3
-                    val paint = Paint()
-                    cubeColors.shuffled().forEachIndexed { index, color ->
-                        paint.color = color
-                        val row = index / 3
-                        val col = index % 3
-                        drawRect(
-                            color = color,
-                            topLeft = Offset(col * cubeSize, row * cubeSize),
-                            size = Size(cubeSize - 4, cubeSize - 4)
-                        )
-                    }
-                }
+                CubeFacePreview(
+                    colors = cubeColors,
+                    modifier = Modifier.size(200.dp),
+                )
             }
 
             // Botões no rodapé
