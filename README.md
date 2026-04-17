@@ -38,7 +38,7 @@ UI (Compose) → ViewModel (intent dispatcher) → Interactor (application layer
 - **CubeRenderEngine**: Decouples the rendering abstraction from the domain logic, responsible for frame generation.
 - **ICubeGameEngine**: Defines the contract for the cube's internal state and core mechanics.
 
-```
+```text
 app/
 ├── domain/          # Pure Kotlin: models, repository interfaces, use cases, and logic
 │   ├── CubeSettings.kt
@@ -135,6 +135,35 @@ The app uses a **single Activity** (`MainMenuActivity`) with [Navigation3](https
 
 Back-stack manipulation replaces Intent-based navigation. No `NavController` needed — the backstack is a plain `SnapshotStateList`.
 
+```kotlin
+val backStack = remember { 
+    mutableListOf<AppRoute>(AppRoute.MainMenu).toMutableStateList() 
+}
+
+val handleBack = {
+    if (backStack.size > 1) {
+        backStack.removeLastOrNull()
+    } else {
+        activity.finish()
+    }
+}
+
+NavDisplay(
+    backStack = backStack,
+    onBack = { handleBack() },
+    entryProvider = entryProvider {
+        entry<AppRoute.MainMenu> {
+            MainMenuScreen(
+                onStartClick = { backStack.add(AppRoute.Cube) },
+                onOptionsClick = { backStack.add(AppRoute.Options) }
+            )
+        }
+        entry<AppRoute.Cube> { CubeScreen(onBack = handleBack) }
+        entry<AppRoute.Options> { OptionsScreen() }
+    }
+)
+```
+
 ---
 
 ## Dependency Injection (Koin)
@@ -147,7 +176,8 @@ The architecture ensures high test coverage:
 - **Domain layer** is pure Kotlin and fully testable in isolation.
 - **Interactor** is tested using mocks and fakes for the engine and repositories.
 - **ViewModel** is thin and focuses on state mapping, making it trivial to verify.
-- **Abstraction**: `TimeProvider`, `CubeLogger`, and `ICubeGameEngine` allow for deterministic testing without Android dependencies (like `android.util.Log`).
+- **Abstraction**: `TimeProvider`, `CubeLogger`, and `ICubeGameEngine` allow for deterministic testing without Android dependencies (like `android.util.Log`). 
+    - **Note on TimeProvider**: In production (`AppModule`), the `TimeProvider` uses `SystemClock.elapsedRealtime()` for monotonic time measurements. In unit tests (e.g., `CubeViewModelTest`), a controllable fake is injected to ensure deterministic physics simulations.
 
 ---
 
