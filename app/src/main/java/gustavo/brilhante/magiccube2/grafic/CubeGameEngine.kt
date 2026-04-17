@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import kotlin.math.abs
 import kotlin.random.Random
 
 data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
@@ -7,26 +8,31 @@ data class CubePosition(var x: Float = 0f, var y: Float = 0f, var z: Float = 0f)
 /**
  * Encapsulates the state of an in-progress or idle slice rotation.
  * @param activeSlice  Which slice is rotating. [ActiveSlice.NONE] = no active rotation.
- * @param direction    Rotation direction: 1 or -1.
+ * @param direction    Rotation direction: 1 or -1. Used only by shuffle/swipe animations.
  * @param isAnimating  Whether a rotation is currently being animated.
+ * @param isDragSnap   True when the animation was triggered by releasing a finger drag.
+ *                     Uses easing toward [snapTarget] instead of a fixed step.
+ * @param snapTarget   Target angle in degrees for drag-snap animations (90f, -90f, or 0f to cancel).
  */
 data class RotationState(
     val activeSlice: ActiveSlice = ActiveSlice.NONE,
     val direction: Int = -1,
-    val isAnimating: Boolean = true
+    val isAnimating: Boolean = true,
+    val isDragSnap: Boolean = false,
+    val snapTarget: Float = 90f,
 )
 
-class CubeGameEngine(shuffleCount: Int) {
+class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
 
     // --- Cube objects ---
-    val cubes: MutableList<Cube> = mutableListOf()
+    override val cubes: MutableList<Cube> = mutableListOf()
 
     // --- Position grid: cubeGrid[x][z][y] = cubeIndex ---
-    val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
+    override val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
 
     // --- Rotation state ---
-    @Volatile var rotation: RotationState = RotationState()
-    var rotatedAngle: Float = 0f
+    @Volatile override var rotation: RotationState = RotationState()
+    override var rotatedAngle: Float = 0f
 
     // --- Shuffle state ---
     var isShuffling: Boolean = true
@@ -34,8 +40,8 @@ class CubeGameEngine(shuffleCount: Int) {
     var shuffleMovesCompleted: Int = 0
 
     // --- Face tracking for closest-side detection ---
-    val faceCenterPositions: Array<CubePosition> = Array(6) { CubePosition() }
-    val faceCenterCubes: List<Pair<Int, CubeSide>> = listOf(
+    override val faceCenterPositions: Array<CubePosition> = Array(6) { CubePosition() }
+    override val faceCenterCubes: List<Pair<Int, CubeSide>> = listOf(
         4 to CubeSide.YELLOW,
         10 to CubeSide.GREEN,
         12 to CubeSide.ORANGE,
@@ -105,7 +111,7 @@ class CubeGameEngine(shuffleCount: Int) {
 
     // --- Public API ---
 
-    fun rotateClosestSideToScreen(rotationSense: Int = 1) {
+    override fun rotateClosestSideToScreen(rotationSense: Int) {
         val closestFaceIndex = faceCenterPositions.withIndex().minByOrNull { it.value.z }?.index ?: -1
         if (closestFaceIndex >= 0) {
             rotation = rotation.copy(
@@ -115,31 +121,112 @@ class CubeGameEngine(shuffleCount: Int) {
         }
     }
 
+    override fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>) {
+        if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) return
+
+        // 1. Find cubelet position in grid [x=col, z=height, y=depth]
+        val cubeIdx = cubes.indexOf(cubelet)
+        var gridPos: Triple<Int, Int, Int>? = null
+        for (x in 0..2) for (z in 0..2) for (y in 0..2) {
+            if (cubeGrid[x][z][y] == cubeIdx) { gridPos = Triple(x, z, y); break }
+        }
+        val pos = gridPos ?: return
+
+        // 2. Project drag onto face plane: Dp = D - (D·N)*N
+        val dot = dragVector.first * normal.first +
+                  dragVector.second * normal.second +
+                  dragVector.third * normal.third
+        val dp = Triple(
+            dragVector.first  - dot * normal.first,
+            dragVector.second - dot * normal.second,
+            dragVector.third  - dot * normal.third,
+        )
+        val dpLenSq = dp.first * dp.first + dp.second * dp.second + dp.third * dp.third
+        if (dpLenSq < 1e-6f) return
+
+        // 3. Rotation axis = N × Dp (all vectors in local cube space)
+        val axis = MatrixMath.normalize(MatrixMath.crossProduct(normal, dp))
+
+        // 4. Snap to dominant axis component and select layer from cubelet position.
+        //    Grid layout: cubeGrid[x][z][y] where z=height(top/bottom), y=depth(front/back).
+        //    local X → ROTATION_AXIS_X  (col index = pos.first)
+        //    local Y → ROTATION_AXIS_Z  (height index = pos.second, since grid Z = vertical axis)
+        //    local Z → ROTATION_AXIS_Y  (depth index = pos.third, since grid Y = depth axis)
+        val ax = abs(axis.first)
+        val ay = abs(axis.second)
+        val az = abs(axis.third)
+
+        val targetSlice = when {
+            ax >= ay && ax >= az -> when (pos.first)  { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
+            ay >= ax && ay >= az -> when (pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+            else                 -> when (pos.third)  { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
+        }
+
+        rotation = rotation.copy(activeSlice = targetSlice, isAnimating = false)
+        rotatedAngle = 0f
+    }
+
     /** Corrects angle sign at the start of each frame before rendering. */
-    fun prepareFrameRotation() {
+    override fun prepareFrameRotation() {
+        if (!rotation.isAnimating) return // Don't correct while dragging
+        if (rotation.isDragSnap) return   // Drag snap: sign already correct from accumulation
         if (rotatedAngle >= 0 && rotation.direction == -1) rotatedAngle *= -1f
     }
 
     /** Advances game state after rendering. */
-    fun postFrameAdvance() {
-        if (rotatedAngle == 90f || rotatedAngle == -90f) {
-            rotatedAngle = 0f
+    override fun postFrameAdvance() {
+        if (rotation.activeSlice != ActiveSlice.NONE && !rotation.isAnimating) return // Dragging
+
+        if (rotatedAngle >= 90f || rotatedAngle <= -90f) {
+            rotatedAngle = if (rotatedAngle >= 90f) 90f else -90f
             commitSliceRotation()
+            rotatedAngle = 0f
             handlePostRotation()
             return
         }
-        if (rotation.isAnimating) {
-            if (rotatedAngle >= 0) rotatedAngle += 9f
-            else rotatedAngle -= 9f
+
+        if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) {
+            if (rotation.isDragSnap) {
+                advanceDragSnap()
+            } else {
+                // Shuffle / swipe: fixed step toward ±90°
+                val step = 9f
+                if (rotatedAngle > 0) rotatedAngle += step
+                else if (rotatedAngle < 0) rotatedAngle -= step
+                else rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false)
+            }
+        }
+    }
+
+    /**
+     * Easing animation for drag-snap.
+     * Interpolates rotatedAngle toward snapTarget each frame.
+     * snapTarget = 0f → snap back (cancel); ±90f → complete the rotation.
+     */
+    private fun advanceDragSnap() {
+        val target = rotation.snapTarget
+        val remaining = target - rotatedAngle
+
+        if (abs(remaining) <= SNAP_DONE_THRESHOLD) {
+            if (abs(target) < 1f) {
+                // Cancel: snap back to neutral without committing
+                rotatedAngle = 0f
+                rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false, isDragSnap = false)
+            } else {
+                // Force exactly ±90° so the commit guard triggers on next advance
+                rotatedAngle = target
+            }
+        } else {
+            rotatedAngle += remaining * SNAP_EASING
         }
     }
 
     private fun handlePostRotation() {
         if (!isShuffling) {
-            rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE)
+            rotation = rotation.copy(isAnimating = false, activeSlice = ActiveSlice.NONE, isDragSnap = false)
         } else {
             val newDirection = if (Random.nextDouble() < 0.5) 1 else -1
-            rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection)
+            rotation = rotation.copy(activeSlice = shuffleableSlices.random(), direction = newDirection, isDragSnap = false)
             shuffleMovesCompleted++
             if (shuffleMovesCompleted == totalShuffleMoves) {
                 isShuffling = false
@@ -183,10 +270,12 @@ class CubeGameEngine(shuffleCount: Int) {
             ActiveSlice.ROTATION_AXIS_Y_0, ActiveSlice.ROTATION_AXIS_Y_1, ActiveSlice.ROTATION_AXIS_Y_2 -> zAxisFaceCycle
             else -> xAxisFaceCycle
         }
+        // Use rotatedAngle sign (same as rotateSlice) so drag and non-drag paths stay consistent.
+        val dir = if (rotatedAngle >= 0) 1 else -1
         var nextColor = ColorLetter.BLACK
         for (i in 0..3) {
             val dirStart: Int; val dirStep: Int; val faceIndex: Int
-            if (rotation.direction == 1) { dirStart = 0; dirStep = 1; faceIndex = i }
+            if (dir == 1) { dirStart = 0; dirStep = 1; faceIndex = i }
             else { dirStart = 3; dirStep = 0; faceIndex = (3 - i) }
 
             val fromColor = if (i == 0) getFaceColor(cubeIdx, faceCycle[faceIndex]) else nextColor
@@ -199,16 +288,17 @@ class CubeGameEngine(shuffleCount: Int) {
         getCell: (col: Int, row: Int) -> Int,
         setCell: (col: Int, row: Int, value: Int) -> Unit
     ) {
+        val dir = if (rotatedAngle >= 0) 1 else -1
         repeat(2) { iteration ->
             var row = 0; var col = 0
-            var current = if (rotation.direction == 1) getCell(col, row) else getCell(row, col)
+            var current = if (dir == 1) getCell(col, row) else getCell(row, col)
             repeat(8) {
                 val displaced = current
                 if (row == 0 && col != 0) col--
                 else if (col == 2) row--
                 else if (row == 2) col++
                 else if (col == 0) row++
-                if (rotation.direction == 1) {
+                if (dir == 1) {
                     current = getCell(col, row); setCell(col, row, displaced)
                 } else {
                     current = getCell(row, col); setCell(row, col, displaced)
@@ -238,5 +328,13 @@ class CubeGameEngine(shuffleCount: Int) {
                 )
             ActiveSlice.NONE -> Unit
         }
+    }
+
+    companion object {
+        // Easing factor for drag-snap animation: rotatedAngle += remaining * SNAP_EASING each frame.
+        // 0.2 → ~15 frames to close 90° gap at 60 fps (~0.25 s).
+        private const val SNAP_EASING = 0.2f
+        // Stop easing and clamp to target when this close (degrees).
+        private const val SNAP_DONE_THRESHOLD = 1f
     }
 }

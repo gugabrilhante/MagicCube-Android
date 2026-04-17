@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -10,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId "gustavo.brilhante.magiccube2"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion 35
         versionCode 5
         versionName "2.1"
@@ -33,11 +34,15 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests.all {
+            useJUnit()
+        }
+    }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
-
     // Android base
     implementation libs.androidx.core.ktx
     implementation libs.androidx.appcompat
@@ -52,8 +57,15 @@ dependencies {
     // Koin
     implementation libs.bundles.koin
 
+    // Navigation3
+    implementation libs.androidx.navigation3.runtime
+    implementation libs.androidx.navigation3.ui
+
     // DataStore
     implementation libs.androidx.datastore.preferences
+    
+    // Serialization
+    implementation libs.kotlinx.serialization.json
 
     // Testes
     testImplementation libs.junit

@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Cubo Mágico</string>
     <string name="how_to_play">Como Jogar:</string>
-    <string name="tap_and_drag_hint">- Clique na tela e arraste, para girar o cubo por inteiro</string>
-    <string name="swipe_quickly_to">- Passe o dedo na tela para girar a face mais próxima!</string>
+    <string name="rotate_cube_hint">- Arraste fora do cubo para girá-lo por inteiro</string>
+    <string name="rotate_face_hint">- Arraste em uma face do cubo para girar apenas aquela face</string>
 
     <string name="options_section">Opções:</string>
     <string name="shuffle_description">- \"Embaralhar\" indica a quantidade de giros que o cubo sofrerá para ser embaralhado, antes de o jogo iniciar</string>
