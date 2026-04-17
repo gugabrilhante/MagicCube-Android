@@ -20,4 +20,6 @@ sealed class CubeIntent {
         val x: Float,
         val y: Float,
     ) : CubeIntent()
+
+    data object ActionCancel : CubeIntent()
 }

@@ -33,6 +33,9 @@ interface ICubeInteractor {
     ): List<CubeControllerEffect>
 
     fun onActionUp(x: Float, y: Float): List<CubeControllerEffect>
+
+    /** Clears all interaction state — called when touch is cancelled or screen is backgrounded. */
+    fun onActionCancel(): List<CubeControllerEffect>
 }
 
 /**

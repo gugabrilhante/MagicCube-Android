@@ -140,6 +140,11 @@ class CubeGameInteractor(
         return effects
     }
 
+    override fun onActionCancel(): List<CubeControllerEffect> {
+        resetGestureState()
+        return listOf(CubeControllerEffect.SetDraggingSlice(false))
+    }
+
     // --- Private helpers ---
 
     private fun resetGestureState() {

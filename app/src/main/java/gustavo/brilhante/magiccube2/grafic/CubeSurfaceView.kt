@@ -24,7 +24,7 @@ class CubeSurfaceView(
         val x = event.x
         val y = event.y
 
-        when (event.action) {
+        when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 val metrics = Resources.getSystem().displayMetrics
                 val viewWidth = if (width > 0) width else metrics.widthPixels
@@ -34,6 +34,7 @@ class CubeSurfaceView(
             }
             MotionEvent.ACTION_UP -> viewModel.onActionUp(x, y)
             MotionEvent.ACTION_MOVE -> viewModel.onActionMove(x, y, previousX, previousY)
+            MotionEvent.ACTION_CANCEL -> viewModel.onActionCancel()
         }
 
         previousX = x

@@ -7,6 +7,8 @@ import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.MatrixMath
 import gustavo.brilhante.magiccube2.grafic.MatrixTracker
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.math.tan
 
 /**
@@ -15,7 +17,7 @@ import kotlin.math.tan
  *
  * All methods except [updateCubeRotation] and [startInertia] must be called exclusively
  * from the GL thread. [updateCubeRotation] and [startInertia] are called from the UI
- * thread; cross-thread visibility is guaranteed by [@Volatile] on the shared fields.
+ * thread; cross-thread visibility and atomicity are guaranteed by [lock].
  */
 class CubeRenderEngine {
 
@@ -25,13 +27,20 @@ class CubeRenderEngine {
 
     private val dist = 2.12f
 
-    // Written by UI thread (touch), read by GL thread (buildFrame).
-    @Volatile var angleRotateX: Float = 0f
-    @Volatile var angleRotateY: Float = 0f
-    @Volatile var isInertiaActive: Boolean = false
+    private val lock = ReentrantLock()
 
-    @Volatile private var angleRotateXAux: Float = 0f
-    @Volatile private var angleRotateYAux: Float = 0f
+    // Protected by [lock] for cross-thread Read-Modify-Write safety.
+    private var _angleRotateX: Float = 0f
+    val angleRotateX: Float get() = lock.withLock { _angleRotateX }
+
+    private var _angleRotateY: Float = 0f
+    val angleRotateY: Float get() = lock.withLock { _angleRotateY }
+
+    private var _isInertiaActive: Boolean = false
+    val isInertiaActive: Boolean get() = lock.withLock { _isInertiaActive }
+
+    private var angleRotateXAux: Float = 0f
+    private var angleRotateYAux: Float = 0f
     private var inertiaInc: Float = 5f
 
     // --- UI-thread methods ---
@@ -42,10 +51,13 @@ class CubeRenderEngine {
      * cubelet is selected.
      */
     fun updateCubeRotation(screenDx: Float, screenDy: Float, scale: Float) {
-        angleRotateXAux = angleRotateX
-        angleRotateYAux = angleRotateY
-        angleRotateX += screenDx * scale
-        angleRotateY += screenDy * scale
+        lock.withLock {
+            _isInertiaActive = false // Disable inertia immediately on user interaction.
+            angleRotateXAux = _angleRotateX
+            angleRotateYAux = _angleRotateY
+            _angleRotateX += screenDx * scale
+            _angleRotateY += screenDy * scale
+        }
     }
 
     /**
@@ -53,13 +65,26 @@ class CubeRenderEngine {
      * [updateCubeRotation] call. Call from the UI thread on ACTION_UP.
      */
     fun startInertia() {
-        isInertiaActive = true
-        inertiaInc = 1f
+        lock.withLock {
+            _isInertiaActive = true
+            inertiaInc = 1f
+        }
+    }
+
+    /**
+     * Resets the rotation state. Call from the UI thread when needed (e.g. onActionDown).
+     */
+    fun stopInertia() {
+        lock.withLock {
+            _isInertiaActive = false
+        }
     }
 
     // --- GL-thread methods ---
 
     fun onSurfaceChanged(width: Int, height: Int) {
+        if (width == 0 || height == 0) return
+
         val zNear = 0.1f
         val zFar = 1000f
         val fov = 80.0f / 57.3f
@@ -86,10 +111,11 @@ class CubeRenderEngine {
 
         matrixTracker.translate(0f, 0f, (-20 + settings.size).toFloat())
 
-        tickInertia()
-
-        matrixTracker.rotate(angleRotateX, 0f, 1f, 0f)
-        matrixTracker.rotate(angleRotateY, 1f, 0f, 0f)
+        lock.withLock {
+            tickInertia()
+            matrixTracker.rotate(_angleRotateX, 0f, 1f, 0f)
+            matrixTracker.rotate(_angleRotateY, 1f, 0f, 0f)
+        }
 
         engine.prepareFrameRotation()
 
@@ -169,15 +195,16 @@ class CubeRenderEngine {
         return commands
     }
 
+    // Must be called inside a lock
     private fun tickInertia() {
-        if (!isInertiaActive) return
-        if (angleRotateX - angleRotateXAux < -2) angleRotateX -= inertiaInc
-        if (angleRotateX - angleRotateXAux > 2) angleRotateX += inertiaInc
-        if (angleRotateY - angleRotateYAux < -2) angleRotateY -= inertiaInc
-        if (angleRotateY - angleRotateYAux > 2) angleRotateY += inertiaInc
+        if (!_isInertiaActive) return
+        if (_angleRotateX - angleRotateXAux < -2) _angleRotateX -= inertiaInc
+        if (_angleRotateX - angleRotateXAux > 2) _angleRotateX += inertiaInc
+        if (_angleRotateY - angleRotateYAux < -2) _angleRotateY -= inertiaInc
+        if (_angleRotateY - angleRotateYAux > 2) _angleRotateY += inertiaInc
         inertiaInc -= 0.1f
         if (inertiaInc < 0.5f) {
-            isInertiaActive = false
+            _isInertiaActive = false
             inertiaInc = 5f
         }
     }

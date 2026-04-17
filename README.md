@@ -104,7 +104,9 @@ app/
 | **Data** | Domain | Presentation, Graphics |
 | **Presentation** | Domain, Graphics (ICubeGameEngine) | Data (only through interfaces), Android Views |
 | **Navigation** | Presentation, Compose | Data, Graphics |
-| **Graphics** | nothing | Repository, DataStore |
+| **Graphics** | Android SDK, OpenGL ES | Repository, DataStore |
+
+> **Note on Graphics**: Classes like `CubeSurfaceView` and `CubeRenderer` in the `grafic/` package rely on the Android SDK and OpenGL ES for rendering, while the engine logic remains decoupled via interfaces.
 
 ---
 
@@ -213,13 +215,13 @@ The rendering engine is built directly on **OpenGL ES 3.0** with no third-party 
 
 | Technology | Version | Usage |
 |---|---|---|
-| **Kotlin** | 2.0.21 | 100% Kotlin codebase |
-| **Jetpack Compose** | BOM 2025.10 | All screens — Material Design 3 |
+| **Kotlin** | 2.2.10 | 100% Kotlin codebase |
+| **Jetpack Compose** | BOM 2026.03.01 | All screens — Material Design 3 |
 | **Clean Architecture** | — | Layered architecture for separation of concerns |
 | **MVI-like Architecture** | — | Unidirectional data flow and intent-based state |
 | **OpenGL ES 3.0** | — | 3D cube rendering |
-| **Navigation3** | 1.0.0-alpha04 | Single-Activity, backstack-based navigation |
-| **Koin** | 4.1.1 | DI for ViewModels, interactors, and engines |
+| **Navigation3** | 1.1.0 | Single-Activity, backstack-based navigation |
+| **Koin** | 4.2.1 | DI for ViewModels, interactors, and engines |
 
 ---
 
