@@ -1,10 +1,14 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
+import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.MovementType
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
+import gustavo.brilhante.magiccube2.grafic.PickingService
 import gustavo.brilhante.magiccube2.grafic.RotationState
 import gustavo.brilhante.magiccube2.testutil.FakeCubeGameEngine
 import gustavo.brilhante.magiccube2.testutil.FakeSettingsRepository
 import gustavo.brilhante.magiccube2.testutil.MainDispatcherRule
+import gustavo.brilhante.magiccube2.testutil.NoOpCubeLogger
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -30,7 +34,9 @@ class CubeViewModelTest {
         viewModel = CubeViewModel(
             observeSettings = ObserveSettingsUseCase(fakeRepository),
             engineFactory = { _ -> fakeEngine },
-            timeProvider = { fakeTime },
+            controllerFactory = { engine ->
+                CubeGameInteractor(engine, CubeInteractionProcessor(), PickingService(), { fakeTime }, NoOpCubeLogger())
+            },
         )
     }
 

@@ -53,8 +53,8 @@ fun OptionsScreen(
 
             CollapsibleCard(title = stringResource(R.string.how_to_play)) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    InfoText(stringResource(R.string.tap_and_drag_hint))
-                    InfoText(stringResource(R.string.swipe_quickly_to))
+                    InfoText(stringResource(R.string.rotate_cube_hint))
+                    InfoText(stringResource(R.string.rotate_face_hint))
                 }
             }
 
