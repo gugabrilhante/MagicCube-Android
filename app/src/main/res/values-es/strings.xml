@@ -2,12 +2,12 @@
 <resources>
     <string name="app_name">Cubo Mágico</string>
     <string name="how_to_play">Cómo Jugar:</string>
-    <string name="tap_and_drag_hint">- Toca y arrastra la pantalla para girar el cubo completo</string>
-    <string name="swipe_quickly_to">- Desliza el dedo en cualquier parte de la pantalla para girar la cara más cercana</string>
+    <string name="rotate_cube_hint">- Arrastra fuera del cubo para girarlo por completo</string>
+    <string name="rotate_face_hint">- Arrastra en una cara del cubo para girar solo esa cara</string>
     <string name="options_section">Opciones:</string>
     <string name="shuffle_description">- "Mezclar" indica la cantidad de giros que realizará el cubo para mezclarse antes de que comience el juego</string>
-    <string name="speed_description">- "Velocidad" indica la rapidez con la que el cubo girará cuando se toque y arrastre la pantalla</string>
-    <string name="size_description">- "Tamaño" indica el tamaño del cubo que se mostrará en la pantalla</string>
+    <string name="speed_description">- "Velocidad" indica la rapidez con la que el cubo girará quando se toque y arrastre la pantalla</string>
+    <string name="size_description">- "Tamaño" indica el tamaño do cubo que se mostrará en la pantalla</string>
     <string name="shuffle">Mezclar</string>
     <string name="speed">Velocidad</string>
     <string name="size">Tamaño</string>

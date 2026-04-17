@@ -59,12 +59,13 @@ class FakeCubeGameEngine : ICubeGameEngine {
         postFrameAdvanceCallCount++
     }
 
-    private fun reset() {
+    fun reset() {
         rotation = RotationState(isAnimating = false)
         rotatedAngle = 0f
         rotateClosestSideCallCount = 0
         lastRotationSense = 0
         prepareFrameRotationCallCount = 0
         postFrameAdvanceCallCount = 0
+        updateRotationFromDragCallCount = 0
     }
 }

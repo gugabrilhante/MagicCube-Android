@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Magic Cube</string>
     <string name="how_to_play">How to Play:</string>
-    <string name="tap_and_drag_hint">- Tap and drag on the screen to rotate the entire cube</string>
-    <string name="swipe_quickly_to">- Swipe anywhere on the screen to quickly rotate the closest face</string>
+    <string name="rotate_cube_hint">- Drag outside the cube to rotate it entirely</string>
+    <string name="rotate_face_hint">- Drag on a cube face to rotate only that slice</string>
 
     <string name="options_section">Options:</string>
     <string name="shuffle_description">- "Shuffle" indicates how many rotations the cube will perform to be mixed before the game starts</string>
@@ -16,4 +16,8 @@
     <string name="options">Options</string>
     <string name="quit">Quit</string>
     <string name="reset_to_default">Reset to default</string>
+
+    <!-- <string name="rotate_cube_hint">- Arrastra fuera del cubo para girarlo por completo</string> -->
+
+    <!-- <string name="rotate_face_hint">- Arrastra en una cara del cubo para girar solo esa cara</string> -->
 </resources>

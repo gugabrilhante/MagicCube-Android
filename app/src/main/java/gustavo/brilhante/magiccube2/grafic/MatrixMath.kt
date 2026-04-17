@@ -104,6 +104,33 @@ object MatrixMath {
         }
     }
 
+    /**
+     * Multiplies a 4 element vector by a 4x4 matrix and stores the result in a 4-element column vector.
+     */
+    fun multiplyMV(result: FloatArray, resultOffset: Int, lhs: FloatArray, lhsOffset: Int, rhs: FloatArray, rhsOffset: Int) {
+        val r0 = lhs[lhsOffset + 0] * rhs[rhsOffset + 0] +
+                lhs[lhsOffset + 4] * rhs[rhsOffset + 1] +
+                lhs[lhsOffset + 8] * rhs[rhsOffset + 2] +
+                lhs[lhsOffset + 12] * rhs[rhsOffset + 3]
+        val r1 = lhs[lhsOffset + 1] * rhs[rhsOffset + 0] +
+                lhs[lhsOffset + 5] * rhs[rhsOffset + 1] +
+                lhs[lhsOffset + 9] * rhs[rhsOffset + 2] +
+                lhs[lhsOffset + 13] * rhs[rhsOffset + 3]
+        val r2 = lhs[lhsOffset + 2] * rhs[rhsOffset + 0] +
+                lhs[lhsOffset + 6] * rhs[rhsOffset + 1] +
+                lhs[lhsOffset + 10] * rhs[rhsOffset + 2] +
+                lhs[lhsOffset + 14] * rhs[rhsOffset + 3]
+        val r3 = lhs[lhsOffset + 3] * rhs[rhsOffset + 0] +
+                lhs[lhsOffset + 7] * rhs[rhsOffset + 1] +
+                lhs[lhsOffset + 11] * rhs[rhsOffset + 2] +
+                lhs[lhsOffset + 15] * rhs[rhsOffset + 3]
+
+        result[resultOffset + 0] = r0
+        result[resultOffset + 1] = r1
+        result[resultOffset + 2] = r2
+        result[resultOffset + 3] = r3
+    }
+
     fun frustumM(m: FloatArray, offset: Int, left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) {
         val rWidth = 1.0f / (right - left)
         val rHeight = 1.0f / (top - bottom)

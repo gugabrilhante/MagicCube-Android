@@ -28,6 +28,7 @@ class MainMenuScreenTest {
         composeRule.setContent {
             MainMenuScreen(
                 modifier = Modifier.fillMaxSize(),
+                viewModel = MainMenuViewModel(),
                 onStartClick = {},
                 onOptionsClick = {},
                 onQuitClick = {},
@@ -42,6 +43,7 @@ class MainMenuScreenTest {
         composeRule.setContent {
             MainMenuScreen(
                 modifier = Modifier.fillMaxSize(),
+                viewModel = MainMenuViewModel(),
                 onStartClick = {},
                 onOptionsClick = {},
                 onQuitClick = {},
@@ -56,6 +58,7 @@ class MainMenuScreenTest {
         composeRule.setContent {
             MainMenuScreen(
                 modifier = Modifier.fillMaxSize(),
+                viewModel = MainMenuViewModel(),
                 onStartClick = {},
                 onOptionsClick = {},
                 onQuitClick = {},
@@ -72,6 +75,7 @@ class MainMenuScreenTest {
         composeRule.setContent {
             MainMenuScreen(
                 modifier = Modifier.fillMaxSize(),
+                viewModel = MainMenuViewModel(),
                 onStartClick = {},
                 onOptionsClick = {},
                 onQuitClick = { quitCalled = true },

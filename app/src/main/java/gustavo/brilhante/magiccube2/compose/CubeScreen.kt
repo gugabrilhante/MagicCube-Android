@@ -54,7 +54,10 @@ fun CubeScreen(
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            surfaceView.onPause()
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     AndroidView(
