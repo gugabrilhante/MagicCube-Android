@@ -22,12 +22,15 @@ class OptionsViewModel(
 
     fun increaseShuffle() = updateState { it.copy(shuffle = (it.shuffle + 1).coerceAtMost(10)) }
     fun decreaseShuffle() = updateState { it.copy(shuffle = (it.shuffle - 1).coerceAtLeast(1)) }
+        fun setShuffle(value: Int) = updateState { it.copy(shuffle = value.coerceIn(1, 10)) }
 
     fun increaseSpeed() = updateState { it.copy(speed = (it.speed + 1).coerceAtMost(10)) }
     fun decreaseSpeed() = updateState { it.copy(speed = (it.speed - 1).coerceAtLeast(1)) }
+    fun setSpeed(value: Int) = updateState { it.copy(speed = value.coerceIn(1, 10)) }
 
     fun increaseSize() = updateState { it.copy(size = (it.size + 1).coerceAtMost(10)) }
     fun decreaseSize() = updateState { it.copy(size = (it.size - 1).coerceAtLeast(1)) }
+    fun setSize(value: Int) = updateState { it.copy(size = value.coerceIn(1, 10)) }
 
     fun resetSettings() = updateState { OptionsUiState() }
 

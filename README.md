@@ -222,6 +222,7 @@ The rendering engine is built directly on **OpenGL ES 3.0** with no third-party 
 | **OpenGL ES 3.0** | — | 3D cube rendering |
 | **Navigation3** | 1.1.0 | Single-Activity, backstack-based navigation |
 | **Koin** | 4.2.1 | DI for ViewModels, interactors, and engines |
+| **AGP** | 9.1.0 | Build tooling with R8 full mode enabled |
 
 ---
 
@@ -229,7 +230,7 @@ The rendering engine is built directly on **OpenGL ES 3.0** with no third-party 
 
 **Requirements:**
 - Android Studio Meerkat (2024.3) or later
-- Min SDK 21 / Target SDK 35
+- Min SDK 23 / Target SDK 35
 - Device or emulator with OpenGL ES 3.0 support
 
 ---
