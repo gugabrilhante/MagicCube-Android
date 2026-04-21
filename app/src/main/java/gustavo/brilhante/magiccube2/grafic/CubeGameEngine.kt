@@ -35,7 +35,7 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
     override var rotatedAngle: Float = 0f
 
     // --- Shuffle state ---
-    var isShuffling: Boolean = true
+    var isShuffling: Boolean = shuffleCount > 0
     val totalShuffleMoves: Int = 10 * shuffleCount
     var shuffleMovesCompleted: Int = 0
 
@@ -67,6 +67,18 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
     init {
         initCubes()
         initPositions()
+        if (isShuffling) {
+            // Kickstart the first shuffle move so postFrameAdvance() can advance it.
+            rotation = rotation.copy(
+                activeSlice = shuffleableSlices.random(),
+                direction   = if (Random.nextDouble() < 0.5) 1 else -1
+            )
+        } else {
+            // shuffleCount == 0: cube starts solved and ready to interact with.
+            // RotationState defaults to isAnimating=true which would block user input;
+            // reset it to idle so swipe/drag works immediately.
+            rotation = rotation.copy(isAnimating = false)
+        }
     }
 
     private fun initCubes() {
@@ -189,11 +201,14 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
             if (rotation.isDragSnap) {
                 advanceDragSnap()
             } else {
-                // Shuffle / swipe: fixed step toward ±90°
+                // Shuffle / swipe: fixed step toward ±90°.
+                // When rotatedAngle is exactly 0 (start of a new move) use
+                // rotation.direction to give the initial nudge instead of
+                // stopping — otherwise every move would dead-lock at zero.
                 val step = 9f
                 if (rotatedAngle > 0) rotatedAngle += step
                 else if (rotatedAngle < 0) rotatedAngle -= step
-                else rotation = rotation.copy(activeSlice = ActiveSlice.NONE, isAnimating = false)
+                else rotatedAngle = step * rotation.direction
             }
         }
     }

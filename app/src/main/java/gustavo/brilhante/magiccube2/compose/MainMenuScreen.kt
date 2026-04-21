@@ -16,6 +16,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
@@ -45,8 +46,7 @@ fun MainMenuScreen(
         }
     }
 
-    // Keep the transition state's color snapshot up-to-date so the overlay
-    // always has the correct face colors ready when play() is triggered.
+    // Keep color snapshot fresh so the overlay always starts with the correct face.
     LaunchedEffect(cubeColors) {
         cubeTransition?.cubeColors = cubeColors
     }
@@ -73,9 +73,18 @@ fun MainMenuScreen(
                     colors = cubeColors,
                     modifier = Modifier
                         .size(200.dp)
-                        // Keep the transition state up-to-date with the cube's current position.
-                        // onGloballyPositioned fires after every layout pass, so the state is
-                        // always accurate even after rotation or resizing.
+                        // During the REVERSE transition the large cube hides while the
+                        // overlay mini-cube is flying toward it, then crossfades in at
+                        // handoff — exactly mirroring the forward landing behaviour.
+                        .graphicsLayer {
+                            alpha = largeCubeAlpha(
+                                isActive = cubeTransition?.isActive ?: false,
+                                isReverse = cubeTransition?.isReverse ?: false,
+                                progress = cubeTransition?.progress ?: 0f
+                            )
+                        }
+                        // Continuously report position so the overlay always has the
+                        // correct start/end coordinates regardless of layout changes.
                         .onGloballyPositioned { coords ->
                             val bounds = coords.boundsInRoot()
                             cubeTransition?.updateSource(

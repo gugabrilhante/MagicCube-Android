@@ -21,8 +21,8 @@ class OptionsViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, OptionsUiState())
 
     fun increaseShuffle() = updateState { it.copy(shuffle = (it.shuffle + 1).coerceAtMost(10)) }
-    fun decreaseShuffle() = updateState { it.copy(shuffle = (it.shuffle - 1).coerceAtLeast(1)) }
-        fun setShuffle(value: Int) = updateState { it.copy(shuffle = value.coerceIn(1, 10)) }
+    fun decreaseShuffle() = updateState { it.copy(shuffle = (it.shuffle - 1).coerceAtLeast(0)) }
+    fun setShuffle(value: Int) = updateState { it.copy(shuffle = value.coerceIn(0, 10)) }
 
     fun increaseSpeed() = updateState { it.copy(speed = (it.speed + 1).coerceAtMost(10)) }
     fun decreaseSpeed() = updateState { it.copy(speed = (it.speed - 1).coerceAtLeast(1)) }

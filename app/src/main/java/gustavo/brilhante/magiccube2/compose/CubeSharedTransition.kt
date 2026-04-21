@@ -1,6 +1,7 @@
 package gustavo.brilhante.magiccube2.compose
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -18,32 +19,45 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import kotlin.math.PI
 import kotlin.math.roundToInt
+import kotlin.math.sin
+
+// ---------------------------------------------------------------------------
+// Fallback colors — used when no live colors are available (direct navigation)
+// ---------------------------------------------------------------------------
+
+internal val DefaultCubeColors: List<Long> = listOf(
+    0xFFB71C1CL, 0xFF1565C0L, 0xFFF9A825L,
+    0xFF2E7D32L, 0xFFF5F5F5L, 0xFFE65100L,
+    0xFF1565C0L, 0xFFB71C1CL, 0xFF2E7D32L
+)
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
 /**
- * Holds the runtime data needed to drive the cube fly-away transition.
+ * Drives the cube shared-element transition in **both directions**:
  *
- * The source screen calls [updateSource] on every layout pass so the overlay
- * always knows where to start the animation from, even after rotation or
- * window resizing.
+ * - **Forward** (MainMenu → Options): large cube flies to the Options mini-cube.
+ * - **Reverse** (Options → MainMenu): mini-cube flies back to the large cube.
  *
- * [play] runs the Animatable; it is safe to call from any coroutine scope.
- * Re-entrant calls while an animation is already playing are silently ignored.
+ * Lifecycle:
+ *  1. [prepareForTransition] — resets the target before forward navigation.
+ *  2. Source screen continuously updates [updateSource] via onGloballyPositioned.
+ *  3. Destination screen calls [updateTarget] via onGloballyPositioned.
+ *  4. [play] / [playReverse] starts the animation concurrently with navigation.
  */
 class CubeTransitionState {
 
-    // Position + size of the cube on the source screen, in root-relative pixels.
+    // Large cube in MainMenuScreen, root-relative pixels.
     var sourceBoundsLeft by mutableFloatStateOf(0f)
         internal set
     var sourceBoundsTop by mutableFloatStateOf(0f)
@@ -51,15 +65,24 @@ class CubeTransitionState {
     var sourceBoundsSizePx by mutableFloatStateOf(0f)
         internal set
 
-    // A snapshot of the cube face colors taken just before the animation starts.
+    // Mini-cube in OptionsScreen, root-relative pixels.
+    var targetBoundsLeft by mutableFloatStateOf(0f)
+        internal set
+    var targetBoundsTop by mutableFloatStateOf(0f)
+        internal set
+    var targetBoundsSizePx by mutableFloatStateOf(0f)
+        internal set
+
+    // Color snapshot captured before each animation.
     var cubeColors by mutableStateOf<List<Long>>(emptyList())
         internal set
 
     var isActive by mutableStateOf(false)
         private set
 
-    // progress drives every animated property; reading it inside @Composable
-    // automatically subscribes the composable to its changes.
+    var isReverse by mutableStateOf(false)
+        private set
+
     private val progressAnim = Animatable(0f)
     val progress: Float get() = progressAnim.value
 
@@ -69,87 +92,201 @@ class CubeTransitionState {
         sourceBoundsSizePx = sizePx
     }
 
+    fun updateTarget(left: Float, top: Float, sizePx: Float) {
+        targetBoundsLeft = left
+        targetBoundsTop = top
+        targetBoundsSizePx = sizePx
+    }
+
+    /** Call before forward navigation to discard stale target coordinates. */
+    fun prepareForTransition() {
+        targetBoundsLeft = 0f
+        targetBoundsTop = 0f
+        targetBoundsSizePx = 0f
+    }
+
+    /** Forward: large cube → Options mini-cube. Re-entrant calls are ignored. */
     suspend fun play(colors: List<Long>) {
         if (isActive) return
         cubeColors = colors
+        isReverse = false
         isActive = true
         progressAnim.snapTo(0f)
-        progressAnim.animateTo(
-            targetValue = 1f,
-            // 500 ms total: long enough to feel cinematic, short enough to feel snappy.
-            animationSpec = tween(durationMillis = 500)
-        )
+        progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
         isActive = false
+        progressAnim.snapTo(0f)
+    }
+
+    /** Reverse: Options mini-cube → large cube. Re-entrant calls are ignored. */
+    suspend fun playReverse(colors: List<Long>) {
+        if (isActive) return
+        cubeColors = colors
+        isReverse = true
+        isActive = true
+        progressAnim.snapTo(0f)
+        progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
+        isActive = false
+        isReverse = false
         progressAnim.snapTo(0f)
     }
 }
 
-/** Provides [CubeTransitionState] down the composition tree. Null outside [AppNavigation]. */
 val LocalCubeTransition = staticCompositionLocalOf<CubeTransitionState?> { null }
 
 // ---------------------------------------------------------------------------
-// Overlay composable
+// Alpha helpers consumed by the screens
 // ---------------------------------------------------------------------------
 
 /**
- * Renders an animated clone of the cube **above** every other UI layer.
+ * Alpha for the **large cube** in MainMenuScreen.
  *
- * Animation design (progress 0 → 1, 500 ms):
- *  - 0 %  → 30 %  : cube scales 1.0 → 1.15  (it "jumps")
- *  - 30 % → 100 % : cube scales 1.15 → 0.2  (it shoots upward and shrinks)
- *  - 0 %  → 40 %  : alpha stays 1.0
- *  - 40 % → 85 %  : alpha 1.0 → 0.0         (fades while still moving)
- *  - 85 % → 100 % : alpha 0.0                (invisible, cleanup phase)
- *  - Y offset: linear 0 → -280 dp            (upward flight path)
+ * During the **reverse** transition the large cube hides while the mini-cube
+ * is flying toward it, then crossfades in at handoff (same window as the
+ * overlay fades out). This makes the landing feel like a real materialisation.
+ *
+ * During the **forward** transition it stays fully visible (NavDisplay fades
+ * the whole screen out anyway, no special handling needed).
+ */
+fun largeCubeAlpha(isActive: Boolean, isReverse: Boolean, progress: Float): Float {
+    if (!isActive && progress == 0f) return 1f
+    if (!isReverse) return 1f
+    return when {
+        progress <= 0.65f -> 0f
+        progress <= 0.90f -> lerpF(0f, 1f, (progress - 0.65f) / 0.25f)
+        else -> 1f
+    }
+}
+
+/**
+ * Alpha for the **mini-cube landing zone** in OptionsScreen.
+ *
+ * - Forward: hidden while the overlay is traveling, crossfades in at handoff.
+ * - Reverse: immediately hidden (overlay takes over the role of the mini-cube).
+ * - No active transition: always visible.
+ */
+fun miniCubeAlpha(isActive: Boolean, isReverse: Boolean, progress: Float): Float {
+    if (!isActive && progress == 0f) return 1f
+    if (isReverse) return 0f                    // overlay represents it; keep it hidden
+    return when {
+        progress <= 0.65f -> 0f
+        progress <= 0.90f -> lerpF(0f, 1f, (progress - 0.65f) / 0.25f)
+        else -> 1f
+    }
+}
+
+/**
+ * Alpha for the **cards content** in OptionsScreen.
+ *
+ * During the **reverse** transition the cards fade out quickly as the cube
+ * departs, giving the impression it is "taking the settings with it."
+ * Fully transparent by 50 % progress.
+ */
+fun optionsContentAlpha(isActive: Boolean, isReverse: Boolean, progress: Float): Float {
+    if (!isActive && progress == 0f) return 1f
+    if (!isReverse) return 1f
+    return (1f - progress * 2f).coerceAtLeast(0f)
+}
+
+// ---------------------------------------------------------------------------
+// Spring for NavDisplay screen entries
+// ---------------------------------------------------------------------------
+
+val CubeArrivalSpring = spring<Float>(
+    dampingRatio = 0.72f,
+    stiffness = Spring.StiffnessMedium
+)
+
+// ---------------------------------------------------------------------------
+// Overlay
+// ---------------------------------------------------------------------------
+
+/**
+ * Draws the animated cube clone **above all UI** (zIndex 99).
+ *
+ * Works for both directions by swapping the effective source / target endpoints
+ * when [CubeTransitionState.isReverse] is true.
+ *
+ * ### Position — arc trajectory
+ *  - Center linearly interpolated between endpoints.
+ *  - Y shifted by `–sin(p · π) · 80dp`: an upward arc that peaks at the
+ *    midpoint, creating a natural "thrown object" path in both directions.
+ *
+ * ### Size — constant-dp overshoot spring
+ *  - 0 %  → 75 % : lerp from start-size → target-size + 12 dp (overshoot)
+ *  - 75 % → 90 % : lerp target+12 dp → target–6 dp (undershoot / bounce)
+ *  - 90 % → 100 %: lerp target–6 dp → exact target-size (settle)
+ *
+ * ### Crossfade handoff
+ *  - 0 %  → 65 % : overlay alpha = 1, destination element alpha = 0
+ *  - 65 % → 90 % : overlay fades 1 → 0, destination fades 0 → 1
+ *  - 90 % → 100 %: overlay invisible, destination fully visible
  */
 @Composable
 fun CubeTransitionOverlay(state: CubeTransitionState) {
-    val isVisible = state.isActive || state.progress > 0f
-    if (!isVisible) return
+    if (!state.isActive && state.progress == 0f) return
     if (state.cubeColors.size < 9 || state.sourceBoundsSizePx == 0f) return
 
     val density = LocalDensity.current
-    val liftPx = with(density) { 280f.dp.toPx() }
-    val sizeDp = with(density) { state.sourceBoundsSizePx.toDp() }
-
     val p = state.progress
 
-    val scale = when {
-        p <= 0.30f -> lerpF(1.00f, 1.15f, p / 0.30f)
-        else       -> lerpF(1.15f, 0.20f, (p - 0.30f) / 0.70f)
+    // Resolve effective endpoints based on direction.
+    // Forward:  source = large cube (MainMenu),  target = mini-cube (Options)
+    // Reverse:  source = mini-cube (Options),    target = large cube (MainMenu)
+    val hasTgt = state.targetBoundsSizePx > 0f
+
+    val (eSrcLeft, eSrcTop, eSrcSz, eTgtLeft, eTgtTop, eTgtSz) = if (!state.isReverse) {
+        // Forward
+        val tgtL = if (hasTgt) state.targetBoundsLeft else state.sourceBoundsLeft
+        val tgtT = if (hasTgt) state.targetBoundsTop  else state.sourceBoundsTop - with(density) { 260f.dp.toPx() }
+        val tgtS = if (hasTgt) state.targetBoundsSizePx else state.sourceBoundsSizePx * 0.28f
+        SixFloats(state.sourceBoundsLeft, state.sourceBoundsTop, state.sourceBoundsSizePx,
+                  tgtL, tgtT, tgtS)
+    } else {
+        // Reverse — swap: Options mini-cube becomes the start, large cube becomes the end
+        val tgtL = if (hasTgt) state.targetBoundsLeft else state.sourceBoundsLeft
+        val tgtT = if (hasTgt) state.targetBoundsTop  else state.sourceBoundsTop
+        val tgtS = if (hasTgt) state.targetBoundsSizePx else state.sourceBoundsSizePx * 0.28f
+        SixFloats(tgtL, tgtT, tgtS,
+                  state.sourceBoundsLeft, state.sourceBoundsTop, state.sourceBoundsSizePx)
     }
 
-    val alpha = when {
-        p <= 0.40f -> 1f
-        p <= 0.85f -> lerpF(1f, 0f, (p - 0.40f) / 0.45f)
+    // -- Trajectory --
+    val srcCx = eSrcLeft + eSrcSz / 2f
+    val srcCy = eSrcTop  + eSrcSz / 2f
+    val tgtCx = eTgtLeft + eTgtSz / 2f
+    val tgtCy = eTgtTop  + eTgtSz / 2f
+
+    val arcPx = with(density) { 80f.dp.toPx() }
+    val currentCx = lerpF(srcCx, tgtCx, p)
+    val currentCy = lerpF(srcCy, tgtCy, p) - sin(p * PI.toFloat()) * arcPx
+
+    // -- Size with constant-dp overshoot spring --
+    val overshootPx = with(density) { 12f.dp.toPx() }
+    val undershootPx = with(density) { 6f.dp.toPx() }
+    val currentSizePx = when {
+        p <= 0.75f -> lerpF(eSrcSz, eTgtSz + overshootPx, p / 0.75f)
+        p <= 0.90f -> lerpF(eTgtSz + overshootPx, eTgtSz - undershootPx, (p - 0.75f) / 0.15f)
+        else       -> lerpF(eTgtSz - undershootPx, eTgtSz,               (p - 0.90f) / 0.10f)
+    }
+
+    // -- Overlay alpha (crossfade handoff) --
+    val overlayAlpha = when {
+        p <= 0.65f -> 1f
+        p <= 0.90f -> lerpF(1f, 0f, (p - 0.65f) / 0.25f)
         else       -> 0f
     }
 
-    val yTranslationPx = -p * liftPx
+    val sizeDp   = with(density) { currentSizePx.toDp() }
+    val offsetX  = (currentCx - currentSizePx / 2f).roundToInt()
+    val offsetY  = (currentCy - currentSizePx / 2f).roundToInt()
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .zIndex(99f)
-    ) {
+    Box(modifier = Modifier.fillMaxSize().zIndex(99f)) {
         Canvas(
             modifier = Modifier
-                .offset {
-                    IntOffset(
-                        x = state.sourceBoundsLeft.roundToInt(),
-                        y = state.sourceBoundsTop.roundToInt()
-                    )
-                }
+                .offset { IntOffset(offsetX, offsetY) }
                 .size(sizeDp)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    translationY = yTranslationPx
-                    this.alpha = alpha
-                    transformOrigin = TransformOrigin(0.5f, 0.5f)
-                }
+                .graphicsLayer { this.alpha = overlayAlpha }
         ) {
-            // Static render — no color animation, just a clean snapshot.
             val cellSize = size.minDimension / 3f
             state.cubeColors.take(9).forEachIndexed { index, argb ->
                 val row = index / 3
@@ -165,20 +302,19 @@ fun CubeTransitionOverlay(state: CubeTransitionState) {
 }
 
 // ---------------------------------------------------------------------------
-// Spring spec shared with NavDisplay for the "overshoot on arrival" feel
+// Internal helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Spring used by NavDisplay's enter transition to give the incoming screen a
- * subtle overshoot that makes it feel like it "lands" after the cube departs.
- */
-val CubeArrivalSpring = spring<Float>(
-    dampingRatio = 0.72f,       // slight overshoot without excessive bounce
-    stiffness = Spring.StiffnessMedium
+private data class SixFloats(
+    val a: Float, val b: Float, val c: Float,
+    val d: Float, val e: Float, val f: Float
 )
 
-// ---------------------------------------------------------------------------
-// Private helpers
-// ---------------------------------------------------------------------------
+private operator fun SixFloats.component1() = a
+private operator fun SixFloats.component2() = b
+private operator fun SixFloats.component3() = c
+private operator fun SixFloats.component4() = d
+private operator fun SixFloats.component5() = e
+private operator fun SixFloats.component6() = f
 
-private fun lerpF(a: Float, b: Float, t: Float) = a + (b - a) * t.coerceIn(0f, 1f)
+internal fun lerpF(a: Float, b: Float, t: Float) = a + (b - a) * t.coerceIn(0f, 1f)

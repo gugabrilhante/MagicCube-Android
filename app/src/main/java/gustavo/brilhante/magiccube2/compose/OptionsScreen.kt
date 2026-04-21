@@ -37,6 +37,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import gustavo.brilhante.magiccube2.R
@@ -51,6 +54,21 @@ fun OptionsScreen(
     onBack: () -> Unit = {}
 ) {
     val state by viewModel.uiState.collectAsState()
+
+    val cubeTransition   = LocalCubeTransition.current
+    val isActive         = cubeTransition?.isActive  ?: false
+    val isReverse        = cubeTransition?.isReverse ?: false
+    val progress         = cubeTransition?.progress  ?: 0f
+
+    // Mini-cube: hidden while traveling, crossfades in after landing (forward only).
+    // During reverse it stays hidden — the overlay takes its role.
+    val miniAlpha    = miniCubeAlpha(isActive, isReverse, progress)
+
+    // Cards: fade out quickly as the cube departs (reverse only).
+    val contentAlpha = optionsContentAlpha(isActive, isReverse, progress)
+
+    // Colors for the mini-cube: live snapshot or standard fallback.
+    val miniColors = cubeTransition?.cubeColors?.takeIf { it.size == 9 } ?: DefaultCubeColors
 
     AnimatedBackground {
         Scaffold(
@@ -85,69 +103,100 @@ fun OptionsScreen(
                     .padding(innerPadding)
                     .padding(horizontal = 16.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(modifier = Modifier.height(4.dp))
+                // ── Landing zone ───────────────────────────────────────────────────────
+                // Target of the FORWARD transition, departure point of the REVERSE.
+                // Its alpha is driven by [miniCubeAlpha] so it is never visible at the
+                // same time as the overlay cube (seamless crossfade).
+                CubeFacePreview(
+                    colors = miniColors,
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 4.dp)
+                        .size(56.dp)
+                        .graphicsLayer { alpha = miniAlpha }
+                        .onGloballyPositioned { coords ->
+                            val bounds = coords.boundsInRoot()
+                            cubeTransition?.updateTarget(
+                                left   = bounds.left,
+                                top    = bounds.top,
+                                sizePx = bounds.width
+                            )
+                        }
+                )
 
-                CollapsibleCard(
-                    title = stringResource(R.string.how_to_play),
-                    initiallyExpanded = true
+                // ── Cards (fade out during reverse transition) ─────────────────────────
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { alpha = contentAlpha },
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        HintItem(text = stringResource(R.string.rotate_cube_hint))
-                        HintItem(text = stringResource(R.string.rotate_face_hint))
-                    }
-                }
-
-                MagicCubeCard {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // How to Play
+                    CollapsibleCard(
+                        title = stringResource(R.string.how_to_play),
+                        initiallyExpanded = true
                     ) {
-                        CubeSectionTitle(
-                            text = stringResource(R.string.options_section),
-                            modifier = Modifier.padding(bottom = 4.dp)
-                        )
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            HintItem(text = stringResource(R.string.rotate_cube_hint))
+                            HintItem(text = stringResource(R.string.rotate_face_hint))
+                        }
+                    }
 
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        SettingSliderRow(
-                            label = stringResource(R.string.shuffle),
-                            value = state.shuffle,
-                            displayValue = "${state.shuffleDisplay}",
-                            onValueChange = viewModel::setShuffle
-                        )
-
-                        SettingSliderRow(
-                            label = stringResource(R.string.speed),
-                            value = state.speed,
-                            displayValue = "${state.speed}",
-                            onValueChange = viewModel::setSpeed
-                        )
-
-                        SettingSliderRow(
-                            label = stringResource(R.string.size),
-                            value = state.size,
-                            displayValue = "${state.size}",
-                            onValueChange = viewModel::setSize
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Button(
-                            onClick = viewModel::resetSettings,
+                    // Settings
+                    MagicCubeCard {
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp)
+                                .padding(horizontal = 16.dp, vertical = 16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(
-                                text = stringResource(R.string.reset_to_default),
-                                style = MaterialTheme.typography.labelLarge
+                            CubeSectionTitle(
+                                text = stringResource(R.string.options_section),
+                                modifier = Modifier.padding(bottom = 4.dp)
                             )
+
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            SettingSliderRow(
+                                label        = stringResource(R.string.shuffle),
+                                value        = state.shuffle,
+                                displayValue = "${state.shuffleDisplay}",
+                                onValueChange = viewModel::setShuffle,
+                                valueRange   = 0f..10f,
+                                steps        = 9,
+                            )
+                            SettingSliderRow(
+                                label        = stringResource(R.string.speed),
+                                value        = state.speed,
+                                displayValue = "${state.speed}",
+                                onValueChange = viewModel::setSpeed
+                            )
+                            SettingSliderRow(
+                                label        = stringResource(R.string.size),
+                                value        = state.size,
+                                displayValue = "${state.size}",
+                                onValueChange = viewModel::setSize
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Button(
+                                onClick = viewModel::resetSettings,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(52.dp)
+                            ) {
+                                Text(
+                                    text  = stringResource(R.string.reset_to_default),
+                                    style = MaterialTheme.typography.labelLarge
+                                )
+                            }
                         }
                     }
                 }
@@ -158,13 +207,19 @@ fun OptionsScreen(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Private composables
+// ---------------------------------------------------------------------------
+
 @Composable
 private fun SettingSliderRow(
     label: String,
     value: Int,
     displayValue: String,
     onValueChange: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    valueRange: ClosedFloatingPointRange<Float> = 1f..10f,
+    steps: Int = 8,
 ) {
     val animatedDisplay by animateIntAsState(
         targetValue = displayValue.toIntOrNull() ?: value,
@@ -181,22 +236,22 @@ private fun SettingSliderRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = label,
+                text  = label,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "$animatedDisplay",
+                text  = "$animatedDisplay",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary
             )
         }
         Slider(
-            value = value.toFloat(),
+            value         = value.toFloat(),
             onValueChange = { onValueChange(it.roundToInt()) },
-            valueRange = 1f..10f,
-            steps = 8,
-            modifier = Modifier.fillMaxWidth()
+            valueRange    = valueRange,
+            steps         = steps,
+            modifier      = Modifier.fillMaxWidth()
         )
     }
 }
@@ -204,9 +259,9 @@ private fun SettingSliderRow(
 @Composable
 private fun HintItem(text: String) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier              = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment     = Alignment.Top
     ) {
         Box(
             modifier = Modifier
@@ -215,7 +270,7 @@ private fun HintItem(text: String) {
                 .background(MaterialTheme.colorScheme.primary, CircleShape)
         )
         Text(
-            text = text,
+            text  = text,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
