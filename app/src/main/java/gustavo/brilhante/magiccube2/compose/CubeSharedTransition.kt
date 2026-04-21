@@ -74,7 +74,7 @@ class CubeTransitionState {
         internal set
 
     // Color snapshot captured before each animation.
-    var cubeColors by mutableStateOf<List<Long>>(emptyList())
+    var cubeColors by mutableStateOf<List<Long>>(DefaultCubeColors)
         internal set
 
     var isActive by mutableStateOf(false)
@@ -108,26 +108,34 @@ class CubeTransitionState {
     /** Forward: large cube → Options mini-cube. Re-entrant calls are ignored. */
     suspend fun play(colors: List<Long>) {
         if (isActive) return
-        cubeColors = colors
+        cubeColors = colors.toList()
         isReverse = false
         isActive = true
         progressAnim.snapTo(0f)
-        progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
-        isActive = false
-        progressAnim.snapTo(0f)
+        try {
+            progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
+        } finally {
+            isActive = false
+            cubeColors = DefaultCubeColors
+            progressAnim.snapTo(0f)
+        }
     }
 
     /** Reverse: Options mini-cube → large cube. Re-entrant calls are ignored. */
     suspend fun playReverse(colors: List<Long>) {
         if (isActive) return
-        cubeColors = colors
+        cubeColors = colors.toList()
         isReverse = true
         isActive = true
         progressAnim.snapTo(0f)
-        progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
-        isActive = false
-        isReverse = false
-        progressAnim.snapTo(0f)
+        try {
+            progressAnim.animateTo(1f, animationSpec = tween(560, easing = FastOutSlowInEasing))
+        } finally {
+            isActive = false
+            isReverse = false
+            cubeColors = DefaultCubeColors
+            progressAnim.snapTo(0f)
+        }
     }
 }
 

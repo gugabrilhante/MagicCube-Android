@@ -417,9 +417,9 @@ Dialog(
 
 ## Checklist
 
-- \[ \] Does every `Activity` call `enableEdgeToEdge()`?
-- \[ \] Is `adjustResize` set in the `AndroidManifest.xml`?
-- \[ \] Does every `TextField`, `OutlinedTextField`, or `BasicTextField` have a parent with `imePadding()`, `fitInside`, `Modifier.safeDrawingPadding()`, `Modifier.safeContentPadding()`, `Modifier.safeGesturesPadding()`, or `contentWindowInsets` set to `WindowInsets.safeDrawing` or `WindowInsets.ime`?
-- \[\] Does the first and last list item draw away from the system bars by passing insets to `contentPadding`?
-- \[\] Do FABs draw above the navigation bars by either being inside a Scaffold or by applying `Modifier.safeDrawingPadding()`?
-- \[\] Does the project build? Run `./gradlew build` to be sure.
+- [ ] Does every `Activity` call `enableEdgeToEdge()`?
+- [ ] Is `adjustResize` set in the `AndroidManifest.xml`?
+- [ ] Does every `TextField`, `OutlinedTextField`, or `BasicTextField` have a parent with `imePadding()`, `fitInside`, `Modifier.safeDrawingPadding()`, `Modifier.safeContentPadding()`, `Modifier.safeGesturesPadding()`, or `contentWindowInsets` set to `WindowInsets.safeDrawing` or `WindowInsets.ime`?
+- [ ] Does the first and last list item draw away from the system bars by passing insets to `contentPadding`?
+- [ ] Do FABs draw above the navigation bars by either being inside a Scaffold or by applying `Modifier.safeDrawingPadding()`?
+- [ ] Does the project build? Run `./gradlew build` to be sure.

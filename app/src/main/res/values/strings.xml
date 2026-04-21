@@ -16,6 +16,7 @@
     <string name="options">Options</string>
     <string name="quit">Quit</string>
     <string name="reset_to_default">Reset to default</string>
+    <string name="back">Back</string>
 
     <!-- <string name="rotate_cube_hint">- Arrastra fuera del cubo para girarlo por completo</string> -->
 

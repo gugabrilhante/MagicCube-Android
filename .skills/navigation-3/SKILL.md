@@ -1,36 +1,25 @@
----
-name: navigation-3
-description: Learn how to install and migrate to Jetpack Navigation 3, and how to
-  implement features and patterns such as deep links, multiple backstacks, scenes
-  (dialogs, bottom sheets, list-detail, two-pane, supporting pane), conditional navigation
-  (such as logged-in navigation vs anonymous), returning results from flows, integration
-  with Hilt, ViewModel, Kotlin, and view interoperability.
-license: Complete terms in LICENSE.txt
-metadata:
-  author: Google LLC
-  keywords:
-  - recipe
-  - Android
-  - Navigation 2
-  - Navigation 3
-  - migration
-  - Compose
-  - guide
-  - dependencies
-  - NavKey
-  - NavHost
-  - NavDisplay
-  - BottomSheet
-  - list-detail
-  - scenes
-  - two-pane
-  - supporting pane
-  - multiple backstacks
-  - dialog
-  - Hilt
-  - ViewModel
-  - View interop.
----
+# Navigation 3
+
+A navigation library for Jetpack Compose that is built on top of the Scene API.
+
+## Core concepts
+
+- *[Scene](references/android/guide/navigation/navigation-3/scene.md)*: A Scene is the fundamental building block of Navigation 3. It represents a single screen or destination in your application.
+- *[SceneHost](references/android/guide/navigation/navigation-3/scene-host.md)*: A SceneHost is responsible for managing a stack of Scenes and providing the necessary infrastructure for navigation.
+- *[NavWrapper](references/android/guide/navigation/navigation-3/nav-wrapper.md)*: A NavWrapper is used to wrap a Scene and provide additional functionality, such as deep linking or analytics.
+
+## Comparison with Navigation 2
+
+- **Scene API**: Navigation 3 is built on top of the Scene API, which provides a more declarative and flexible way to define your navigation structure.
+- **Improved state management**: Navigation 3 offers more robust and flexible state management, making it easier to handle complex navigation scenarios.
+- **Declarative API**: The Navigation 3 API is more declarative and intuitive, making it easier to learn and use.
+- **Type-safety**: Navigation 3 provides improved type-safety for navigation routes and arguments, reducing the risk of runtime errors.
+
+## Key APIs
+
+- *[NavDisplay](references/android/guide/navigation/navigation-3/nav-display.md)*: A Composable that displays the current Scene in a SceneHost.
+- *[rememberNavStack](references/android/guide/navigation/navigation-3/remember-nav-stack.md)*: A Composable function that creates and remembers a NavStack, which represents the current navigation state.
+- *[rememberNavWrapper](references/android/guide/navigation/navigation-3/remember-nav-wrapper.md)*: A Composable function that creates and remembers a NavWrapper.
 
 ## Migration guide
 
@@ -42,68 +31,12 @@ metadata:
 
 ## Developer documentation
 
-- \*[Navigation 3](references/android/guide/navigation/navigation-3/index.md). Search documentation for more information on basics, saving and managing navigation state, modularizing navigation code, creating custom layouts using Scenes, animating between destinations, or applying logic or wrappers to destinations.
+- *[Navigation 3](references/android/guide/navigation/navigation-3/index.md). Search documentation for more information on basics, saving and managing navigation state, modularizing navigation code, creating custom layouts using Scenes, animating between destinations, or applying logic or wrappers to destinations.
 
 ## Recipes
 
 Code examples showcasing common patterns.
 
-### Basic API usage
-
-- *[Basic](references/android/guide/navigation/navigation-3/recipes/basic.md)*: Shows most basic API usage.
-- *[Saveable back stack](references/android/guide/navigation/navigation-3/recipes/basicsaveable.md)*: Shows basic API usage with a persistent back stack.
-- *[Entry provider DSL](references/android/guide/navigation/navigation-3/recipes/basicdsl.md)*: Shows basic API usage using the entryProvider DSL.
-
-### Common UI
-
-- *[Common UI](references/android/guide/navigation/navigation-3/recipes/common-ui.md)*: Demonstrates how to implement a common navigation UI pattern with a bottom navigation bar and multiple back stacks, where each tab in the navigation bar has its own navigation history.
-
-### Deep links
-
-- *[Basic](references/android/guide/navigation/navigation-3/recipes/deeplinks-basic.md)*: Shows how to parse a deep link URL from an Android Intent into a navigation key.
-- *[Advanced](references/android/guide/navigation/navigation-3/recipes/deeplinks-advanced.md)*: Shows how to handle deep links with a synthetic back stack and correct "Up" navigation behavior.
-
-### Scenes
-
-#### Use built-in Scenes
-
-- *[Dialog](references/android/guide/navigation/navigation-3/recipes/dialog.md)*: Shows how to create a Dialog.
-
-#### Create custom Scenes
-
-- *[BottomSheet](references/android/guide/navigation/navigation-3/recipes/bottomsheet.md)*: Shows how to create a BottomSheet destination.
-- *[List-Detail Scene](references/android/guide/navigation/navigation-3/recipes/scenes-listdetail.md)*: Demonstrates how to implement adaptive list-detail layouts using the Navigation 3 Scenes API.
-- *[Two pane Scene](references/android/guide/navigation/navigation-3/recipes/scenes-twopane.md)*: Demonstrates how to implement adaptive two-pane layouts using the Navigation 3 Scenes API.
-
-### Material Adaptive
-
-- *[Material List-Detail](references/android/guide/navigation/navigation-3/recipes/material-listdetail.md)*: Demonstrates how to implement an adaptive list-detail layout using Material 3 Adaptive.
-- *[Material Supporting Pane](references/android/guide/navigation/navigation-3/recipes/material-supportingpane.md)*: Demonstrates how to implement an adaptive supporting pane layout using Material 3 Adaptive.
-
-### Animations
-
-- *[Animations](references/android/guide/navigation/navigation-3/recipes/animations.md)*: Shows how to override the default animations for all destinations and a single destination.
-
-### Common back stack behavior
-
-- *[Multiple back stacks](references/android/guide/navigation/navigation-3/recipes/multiple-backstacks.md)*: Shows how to create multiple top level routes, each with its own back stack. Top level routes are displayed in a navigation bar allowing users to switch between them. State is retained for each top level route, and the navigation state persists config changes and process death.
-
-### Conditional navigation
-
-- *[Conditional navigation](references/android/guide/navigation/navigation-3/recipes/conditional.md)*: Switch to a different navigation flow when a condition is met. For example, for authentication or first-time user onboarding.
-
-### Architecture
-
-- *[Modularized navigation code (Hilt)](references/android/guide/navigation/navigation-3/recipes/modular-hilt.md)*: Demonstrates how to decouple navigation code into separate modules using Hilt or Dagger for DI.
-- *[Modularized navigation code (Koin)](references/android/guide/navigation/navigation-3/recipes/modular-koin.md)*: Demonstrates how to decouple navigation code into separate modules using Koin for DI.
-
-### Working with ViewModel
-
-#### Passing navigation arguments
-
-- *[Basic ViewModel](references/android/guide/navigation/navigation-3/recipes/passingarguments.md)* : Navigation arguments are passed to a `ViewModel` constructed using `viewModel()`
-
-### Returning results
-
-- *[Returning Results as Events](references/android/guide/navigation/navigation-3/recipes/results-event.md)* : Returning results as events to content in another `NavEntry`
-- *[Returning Results as State](references/android/guide/navigation/navigation-3/recipes/results-state.md)* : Returning results as state stored in a `CompositionLocal`
+- *[Navigation 3 basic usage](references/android/guide/navigation/navigation-3/recipes/basic-usage.md)*: Example demonstrating basic setup and usage of Navigation 3 in a Jetpack Compose application.
+- *[Navigation 3 with deep linking](references/android/guide/navigation/navigation-3/recipes/deep-linking.md)*: Example showing how to implement deep linking with Navigation 3.
+- *[Navigation 3 with custom transitions](references/android/guide/navigation/navigation-3/recipes/custom-transitions.md)*: Example demonstrating how to create and use custom animations between Scenes.

@@ -7,9 +7,9 @@ The following types of keep rules prevents all the optimization of R8 in a
 package, these must be avoided at any costs and must be refined to target a
 specific class or classes.
 
-    -keep class com.example.package.** { *; } - Prevents optimization of all the classess including members in the package and subpackages
+    -keep class com.example.package.** { *; } - Prevents optimization of all the classes including members in the package and subpackages
     -keep class com.example.package.* { *; } - Prevents optimization of all the classes including members in the package
-    -keep class **.package.** { *; } - Prevents optimization of all the classess including members in all the package containing name - package.
+    -keep class **.package.** { *; } - Prevents optimization of all the classes including members in all the package containing name - package.
 
 Depending on the package level the number of classes gets affected changes, so
 if the package level is higher, more classes are affected. Suggest to refine
@@ -24,9 +24,7 @@ and specific keep rule
 
     -keep class !com.example.MyClass{*;}
 
-This keeps the entire app
-other than this class. Optimization are disabled for the entire class other
-than this class.
+This keeps the entire app except this class; optimizations are disabled for the class.
 
 ## 3. Keep Rules for both class and members
 
