@@ -18,7 +18,7 @@
         <activity
             android:name=".activity.MainMenuActivity"
             android:exported="true"
-            android:screenOrientation="fullSensor"
+            android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.MagicCube">
             <intent-filter>
