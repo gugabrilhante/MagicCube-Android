@@ -73,11 +73,11 @@ class OptionsViewModelTest {
     }
 
     @Test
-    fun `shuffle is clamped to min 1`() = runTest {
+    fun `shuffle is clamped to min 0`() = runTest {
         repeat(20) { viewModel.decreaseShuffle() }
         advanceUntilIdle()
 
-        assertEquals(1, viewModel.uiState.value.shuffle)
+        assertEquals(0, viewModel.uiState.value.shuffle)
     }
 
     // --- Speed ---

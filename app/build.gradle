@@ -13,8 +13,8 @@ android {
         applicationId "gustavo.brilhante.magiccube2"
         minSdkVersion 23
         targetSdkVersion 35
-        versionCode 5
-        versionName "2.1"
+        versionCode 6
+        versionName "3.0"
     }
     buildTypes {
         release {
@@ -28,11 +28,11 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     testOptions {

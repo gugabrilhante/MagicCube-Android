@@ -8,34 +8,48 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = CyanAccent300,
+    onPrimary = Navy900,
+    primaryContainer = Navy600,
+    onPrimaryContainer = CyanAccent300,
+    secondary = AmberAccent,
+    onSecondary = Navy900,
+    secondaryContainer = AmberAccentContainer,
+    onSecondaryContainer = AmberAccent,
+    background = Navy900,
+    onBackground = OnNavy,
+    surface = SurfaceDark,
+    onSurface = OnNavy,
+    surfaceVariant = SurfaceVariantDark,
+    onSurfaceVariant = OnNavySecondary,
+    outline = OutlineDark,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    primary = PrimaryBlue,
     onPrimary = Color.White,
+    primaryContainer = PrimaryBlueLight,
+    onPrimaryContainer = Navy900,
+    secondary = AmberAccent,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondaryContainer = Color(0xFFFFF3E0),
+    onSecondaryContainer = Color(0xFF3D2A00),
+    background = SurfaceLight,
+    onBackground = NeutralGray900,
+    surface = Color.White,
+    onSurface = NeutralGray900,
+    surfaceVariant = SurfaceVariantLight,
+    onSurfaceVariant = NeutralGray600,
+    outline = OutlineLight,
 )
 
 @Composable
 fun MagicCubeAndroidTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
@@ -44,7 +58,6 @@ fun MagicCubeAndroidTheme(
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
