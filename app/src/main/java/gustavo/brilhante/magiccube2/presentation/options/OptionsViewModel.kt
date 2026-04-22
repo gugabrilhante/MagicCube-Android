@@ -5,10 +5,14 @@ import androidx.lifecycle.viewModelScope
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class OptionsViewModel(
@@ -16,9 +20,22 @@ class OptionsViewModel(
     observeSettings: ObserveSettingsUseCase,
 ) : ViewModel() {
 
-    val uiState: StateFlow<OptionsUiState> = observeSettings()
-        .map { it.toUiState() }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, OptionsUiState())
+    private val localUpdates = MutableStateFlow<OptionsUiState?>(null)
+
+    val uiState: StateFlow<OptionsUiState> = combine(
+        observeSettings().map { it.toUiState() },
+        localUpdates
+    ) { remote, local ->
+        local ?: remote
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, OptionsUiState())
+
+    init {
+        viewModelScope.launch {
+            uiState.collectLatest { state ->
+                saveSettings(state.toSettings())
+            }
+        }
+    }
 
     fun increaseShuffle() = updateState { it.copy(shuffle = (it.shuffle + 1).coerceAtMost(10)) }
     fun decreaseShuffle() = updateState { it.copy(shuffle = (it.shuffle - 1).coerceAtLeast(0)) }
@@ -35,8 +52,8 @@ class OptionsViewModel(
     fun resetSettings() = updateState { OptionsUiState() }
 
     private fun updateState(transform: (OptionsUiState) -> OptionsUiState) {
-        viewModelScope.launch {
-            saveSettings(transform(uiState.value).toSettings())
+        localUpdates.update { current ->
+            transform(current ?: uiState.value)
         }
     }
 

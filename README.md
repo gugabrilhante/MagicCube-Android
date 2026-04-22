@@ -16,7 +16,7 @@ An interactive 3D Rubik's Cube simulator for Android, built with Clean Architect
 - **Touch interaction**: drag to rotate the cube freely, swipe to rotate a face slice
 - **Inertia physics**: smooth momentum-based rotation that decays naturally
 - **Closest-face detection**: swipe automatically targets the face nearest to the screen
-- **Shuffle**: configurable number of random rotations (0–100 moves); 0 starts the cube already solved
+- **Shuffle**: configurable number of random rotations (0–10 moves); 0 starts the cube already solved
 - **Settings**: tune shuffle count, rotation speed, and cube size
 - **Material 3 design system**: game-inspired dark palette, full typography scale, dynamic color support
 - **Custom shared-element transition**: the cube face travels between screens with arc trajectory and spring-overshoot landing
