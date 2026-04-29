@@ -2,6 +2,12 @@
 
 An interactive 3D Rubik's Cube simulator for Android, built with Clean Architecture + MVVM with MVI-like unidirectional data flow, Jetpack Compose, Koin, Navigation3, and OpenGL ES 3.0.
 
+## Available on Google Play
+
+[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" width="200">](https://play.google.com/store/apps/details?id=gustavo.brilhante.magiccube2)
+
+---
+
 ## Demo
 
 | <img src="docs/magic_cube_options.gif" width="45%"> | <img src="docs/magic_cube_gameplay.gif" width="45%"> |
