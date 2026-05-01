@@ -1,5 +1,10 @@
 # Magic Cube Android
 
+[![Build](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml)
+[![Unit Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml)
+[![UI Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml)
+[![codecov](https://codecov.io/gh/gugabrilhante/MagicCube-Android/branch/master/graph/badge.svg)](https://codecov.io/gh/gugabrilhante/MagicCube-Android)
+
 An interactive 3D Rubik's Cube simulator for Android, built with Clean Architecture + MVVM with MVI-like unidirectional data flow, Jetpack Compose, Koin, Navigation3, and OpenGL ES 3.0.
 
 ## Available on Google Play
@@ -144,20 +149,7 @@ The UI was designed following **Material Design 3** guidelines, inspired by the 
 
 ### Material 3 Design System
 
-A custom color scheme built around a **dark navy + cyan/amber** game palette. The palette was designed to complement the `AnimatedBackground` gradient and work in both light and dark themes.
-
-```kotlin
-// Dark scheme — primary game experience
-private val DarkColorScheme = darkColorScheme(
-    primary          = CyanAccent300,      // sky blue accent
-    secondary        = AmberAccent,        // warm cube colour
-    surface          = SurfaceDark,        // navy card surface
-    background       = Navy900,
-    onBackground     = OnNavy,
-)
-```
-
-Typography uses `FontFamily.Cursive` for the game title (`displaySmall`) and the standard Material 3 scale for all other text — ensuring consistent hierarchy without breaking the game aesthetic.
+A custom color scheme built around a **dark navy + cyan/amber** game palette, designed to complement the `AnimatedBackground` gradient. Typography uses `FontFamily.Cursive` for the game title and the standard Material 3 scale elsewhere.
 
 ### Custom Shared-Element Transition
 
@@ -174,26 +166,9 @@ AppNavigation
 
 **`CubeTransitionState`** is shared via `CompositionLocal`. Both screens write their cube bounds via `onGloballyPositioned`. When triggered, `play()` / `playReverse()` animates `progress` from 0 → 1 using `Animatable`.
 
-**Forward transition (MainMenu → Options):**
-- Overlay cube traces a **parabolic arc** from the 200 dp source to the 56 dp target
-- **Size keyframes** create an overshoot spring: source → target × 1.20 (75 %) → target × 0.92 (90 %) → exact target (100 %)
-- **Crossfade handoff** (65–90 %): overlay fades out while the real mini-cube in OptionsScreen fades in — the two composables are never visible simultaneously
+**Forward transition (MainMenu → Options):** the overlay cube traces a **parabolic arc** from the 200 dp source to the 56 dp target, with size keyframes that create an overshoot spring (grow 20 %, bounce back 8 %, settle). A crossfade handoff at 65–90 % progress ensures the overlay and the real mini-cube are never both visible.
 
-**Reverse transition (Options → MainMenu):**
-- Endpoints are swapped; the mini-cube flies back and grows with the same overshoot spring
-- OptionsScreen card content fades out in the first 50 % of the animation ("taking the settings with it")
-- MainMenu large cube stays hidden until the overlay arrives, then crossfades in
-
-```
-Position (arc, both directions):
-  currentCx = lerp(srcCx, tgtCx, p)
-  currentCy = lerp(srcCy, tgtCy, p) − sin(p · π) · 80dp   ← upward arc peak at p=0.5
-
-Size (overshoot spring):
-  0 % → 75 %  : lerp(srcSize, tgtSize + 12dp, p/0.75)
-  75 % → 90 % : lerp(tgtSize + 12dp, tgtSize − 6dp, ...)  ← bounce
-  90 % → 100 %: lerp(tgtSize − 6dp, tgtSize, ...)          ← settle
-```
+**Reverse transition (Options → MainMenu):** endpoints are swapped, card content fades out early, and the MainMenu large cube crossfades in when the overlay arrives.
 
 ### Route-Aware Navigation Transitions
 
@@ -212,13 +187,7 @@ Size (overshoot spring):
 2. Only after `scaleJob.join()` (360 ms) does `backStack.add(AppRoute.Cube)` run — the GL surface appears on an already-dark screen.
 3. Inside `CubeScreen`, a pure-Compose `Box` overlay (matching `AnimatedBackground`'s dark colour) starts fully opaque and fades to transparent over 480 ms, revealing the GL scene smoothly.
 
-```
-t =   0 ms  MainMenu: fade starts (220 ms) + collapse starts (360 ms)
-t = 220 ms  MainMenu fully transparent; ghost still shrinking
-t = 360 ms  Collapse done → navigate; CubeScreen GL surface + dark overlay appear
-t = 360 ms  Overlay fades out (480 ms)
-t = 840 ms  GL scene fully revealed
-```
+MainMenu fades (220 ms) and scale-collapses (360 ms) concurrently; navigation to `CubeScreen` fires at 360 ms so the GL surface appears on an already-dark screen. A pure-Compose overlay then fades to transparent over 480 ms, revealing the 3D scene.
 
 ### Micro-interactions & Polish
 
@@ -245,36 +214,7 @@ The interaction system uses a sophisticated pipeline to translate 2D screen touc
 
 The app uses a **single Activity** (`MainMenuActivity`) with [Navigation3](https://developer.android.com/jetpack/compose/navigation3) managing all screen transitions.
 
-Back-stack manipulation replaces Intent-based navigation. No `NavController` needed — the backstack is a plain `SnapshotStateList`.
-
-```kotlin
-val backStack = remember {
-    mutableListOf<AppRoute>(AppRoute.MainMenu).toMutableStateList()
-}
-
-NavDisplay(
-    backStack = backStack,
-    onBack = { handleBack() },
-    transitionSpec = {
-        val from = initialState.key
-        val to   = targetState.key
-        when {
-            from is AppRoute.MainMenu && to is AppRoute.Cube ->
-                EnterTransition.None togetherWith ExitTransition.None  // manual anim
-            from is AppRoute.Cube && to is AppRoute.MainMenu ->
-                (fadeIn(tween(380)) + scaleIn(tween(380), 0f)) togetherWith ExitTransition.None
-            else ->
-                (fadeIn(tween(300)) + scaleIn(CubeArrivalSpring, 0.90f)) togetherWith
-                    (fadeOut(tween(220)) + scaleOut(tween(220), 1.06f))
-        }
-    },
-    entryProvider = entryProvider {
-        entry<AppRoute.MainMenu> { MainMenuScreen(...) }
-        entry<AppRoute.Cube>     { CubeScreen(onBack = handleBack) }
-        entry<AppRoute.Options>  { OptionsScreen(onBack = optionsBack) }
-    }
-)
-```
+Back-stack manipulation replaces Intent-based navigation. The backstack is a plain `SnapshotStateList<AppRoute>` — no `NavController` needed. `NavDisplay` handles route-aware enter/exit transitions for each route pair (MainMenu ↔ Options, MainMenu → Cube, Cube → MainMenu).
 
 ---
 
@@ -306,18 +246,60 @@ The rendering engine is built directly on **OpenGL ES 3.0** with no third-party 
 
 ---
 
-## Tests
+## Quality Engineering & Test Strategy
 
-### Unit tests (`src/test/`)
+### Test Pyramid
+
+```
+         ┌─────────────────┐
+         │   UI Tests      │  AppNavigationTest, OptionsScreenTest, MainMenuScreenTest
+         │  (Espresso /    │  Real Activity, real Compose, no OpenGL
+         │   Compose)      │
+         ├─────────────────┤
+         │ Integration     │  DataStoreSettingsDataSourceTest, SettingsFlowIntegrationTest
+         │   Tests         │  Real DataStore, fake repository, full vertical slice
+         ├─────────────────┤
+         │   Unit Tests    │  Pure JVM — JUnit4 + MockK + Turbine
+         │                 │  Domain math, orchestration, ViewModel state
+         └─────────────────┘
+```
+
+### Unit Tests (`src/test/`)
 
 | Test class | What it covers |
 |---|---|
-| `CubeGameInteractorTest` | Logic orchestration, engine interaction, effect generation |
-| `CubeInteractionProcessorTest` | Pure math, gesture classification, projections |
-| `CubeViewModelTest` | State management, intent dispatching |
-| `MainMenuViewModelTest` | Navigation event emission |
+| `CubeInteractionProcessorTest` | Pure gesture math: swipe classification, coordinate projection |
+| `CubeGameInteractorTest` | Touch orchestration, effect generation (MockK) |
+| `CubeViewModelTest` | Intent dispatch, state updates, inertia trigger |
+| `MainMenuViewModelTest` | Delayed navigation event emission |
 | `OptionsViewModelTest` | Increment/decrement/clamp/reset for all settings |
-| `SettingsFlowIntegrationTest` | End-to-end DataStore persistence |
+| `ObserveSettingsUseCaseTest` | Use-case delegation and Flow correctness |
+| `SaveSettingsUseCaseTest` | Persistence delegation |
+| `SettingsRepositoryTest` | Repository contract with fake data source |
+| `SettingsFlowIntegrationTest` | End-to-end: repository → use cases → ViewModel |
+
+### Integration Tests (`src/androidTest/data/`)
+
+`DataStoreSettingsDataSourceTest` — real DataStore on device context, validates the full lifecycle:
+`default values → save → observe → update → reset`
+
+### UI Tests (`src/androidTest/ui/`)
+
+Compose UI tests with `createAndroidComposeRule` / `createComposeRule` — no OpenGL, no Koin:
+- App launch → MainMenu visible
+- Navigate to Options → back navigation
+- Slider interaction → UI reflects change
+- All screens render expected labels and buttons
+
+### CI/CD
+
+| Workflow | Trigger | Runner |
+|---|---|---|
+| **Build** | PR → master | ubuntu-latest |
+| **Unit Tests** | PR → master | ubuntu-latest |
+| **UI Tests** | PR → master | macos-latest (emulator API 29) |
+
+Coverage reports are generated with **JaCoCo** (HTML + XML) and uploaded to **Codecov**. OpenGL, Compose UI, and Activity layers are excluded from coverage metrics.
 
 ---
 
