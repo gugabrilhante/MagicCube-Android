@@ -29,7 +29,8 @@ jobs:
           api-level: 32
           target: google_apis
           arch: arm64-v8a
-          profile: Nexus 6
+          profile: pixel_5
+          force-avd-creation: true
           disable-animations: true
-          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -no-metrics -gpu swiftshader_indirect
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim
           script: ./gradlew connectedDebugAndroidTest --no-daemon --no-parallel --max-workers=1
