@@ -79,6 +79,9 @@ android {
         unitTests.all {
             useJUnit()
         }
+
+        // Android instrumented tests configuration
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
 }
 
@@ -115,6 +118,9 @@ dependencies {
     androidTestImplementation platform(libs.compose.bom)
     androidTestImplementation libs.compose.ui.test.junit4
     androidTestImplementation libs.mockk.android
+
+    // AndroidX Test Orchestrator for better test execution
+    androidTestUtil libs.androidx.test.orchestrator
 
     // Debug tools
     debugImplementation libs.compose.ui.tooling

@@ -68,8 +68,9 @@ jobs:
                       
                   full_path = f"{package_name}/{file_name}"
                   
-                  # Ignore specific paths
-                  if any(key in full_path.lower() for key in exclude_keywords):
+                  # Ignore specific paths by checking path segments exactly
+                  path_parts = full_path.lower().split('/')
+                  if any(part == key for part in path_parts for key in exclude_keywords):
                       continue
                   
                   line_counter = sourcefile.find('counter[@type="LINE"]')

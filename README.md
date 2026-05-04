@@ -220,7 +220,7 @@ The rendering engine is built directly on **OpenGL ES 3.0** with no third-party 
 
 ### Test Pyramid
 
-```
+```text
          ┌─────────────────┐
          │   UI Tests      │  AppNavigationTest, OptionsScreenTest, MainMenuScreenTest
          │  (Espresso /    │  Real Activity, real Compose, no OpenGL
