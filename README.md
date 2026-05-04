@@ -1,8 +1,8 @@
 # Magic Cube Android
 
-[![Build](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml)
-[![Unit Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml)
-[![UI Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml/badge.svg)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml)
+[![Build](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml)
+[![Unit Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml)
+[![UI Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml)
 [![codecov](https://codecov.io/gh/gugabrilhante/MagicCube-Android/branch/master/graph/badge.svg)](https://codecov.io/gh/gugabrilhante/MagicCube-Android)
 
 An interactive 3D Rubik's Cube simulator for Android, built with Clean Architecture + MVVM with MVI-like unidirectional data flow, Jetpack Compose, Koin, Navigation3, and OpenGL ES 3.0.
@@ -153,41 +153,11 @@ A custom color scheme built around a **dark navy + cyan/amber** game palette, de
 
 ### Custom Shared-Element Transition
 
-Because Navigation3's `NavDisplay` doesn't expose its internal `AnimatedContentScope` for shared elements, a custom overlay system was built from scratch:
-
-**Architecture**
-```
-AppNavigation
-├── CompositionLocalProvider(LocalCubeTransition = CubeTransitionState)
-│   └── Box (fillMaxSize)
-│       ├── NavDisplay                   ← screen content, z = 0
-│       └── CubeTransitionOverlay        ← animated clone, z = 99
-```
-
-**`CubeTransitionState`** is shared via `CompositionLocal`. Both screens write their cube bounds via `onGloballyPositioned`. When triggered, `play()` / `playReverse()` animates `progress` from 0 → 1 using `Animatable`.
-
-**Forward transition (MainMenu → Options):** the overlay cube traces a **parabolic arc** from the 200 dp source to the 56 dp target, with size keyframes that create an overshoot spring (grow 20 %, bounce back 8 %, settle). A crossfade handoff at 65–90 % progress ensures the overlay and the real mini-cube are never both visible.
-
-**Reverse transition (Options → MainMenu):** endpoints are swapped, card content fades out early, and the MainMenu large cube crossfades in when the overlay arrives.
+A custom overlay system built from scratch to handle transitions that Navigation3 doesn't natively expose. It uses `CompositionLocal` and `Animatable` to trace a parabolic arc from the main menu to the options screen, with size keyframes that create an overshoot spring effect.
 
 ### Route-Aware Navigation Transitions
 
-`NavDisplay.transitionSpec` branches on `initialState.key` / `targetState.key` to give each route pair its own motion:
-
-| Route pair | Exit | Enter |
-|---|---|---|
-| MainMenu → Options | fade + spring-scale out | spring-scale in (0.90×, damping 0.72) |
-| Options → MainMenu | fade + spring-scale out | spring-scale in |
-| **MainMenu → Cube** | manual Animatable | `EnterTransition.None` |
-| **Cube → MainMenu** | `ExitTransition.None` | scale from 0 + fade (380 ms) |
-
-**MainMenu → Cube** required a special approach. `GLSurfaceView` renders on a dedicated hardware surface composited by the window manager — completely outside the Compose/View alpha hierarchy. No `graphicsLayer` or `NavDisplay` transition can fade it. The solution:
-
-1. Two independent `Animatable`s drive MainMenu's **fade** (220 ms) and **scale collapse** (360 ms) concurrently, at different rates so both effects are visually distinct.
-2. Only after `scaleJob.join()` (360 ms) does `backStack.add(AppRoute.Cube)` run — the GL surface appears on an already-dark screen.
-3. Inside `CubeScreen`, a pure-Compose `Box` overlay (matching `AnimatedBackground`'s dark colour) starts fully opaque and fades to transparent over 480 ms, revealing the GL scene smoothly.
-
-MainMenu fades (220 ms) and scale-collapses (360 ms) concurrently; navigation to `CubeScreen` fires at 360 ms so the GL surface appears on an already-dark screen. A pure-Compose overlay then fades to transparent over 480 ms, revealing the 3D scene.
+`NavDisplay.transitionSpec` defines specific motion for each route pair, such as spring-scale and fade animations. The transition from MainMenu to the 3D CubeScreen uses a coordinated fade and scale-collapse to smoothly reveal the OpenGL surface.
 
 ### Micro-interactions & Polish
 
@@ -298,6 +268,7 @@ Compose UI tests with `createAndroidComposeRule` / `createComposeRule` — no Op
 | **Build** | PR → master | ubuntu-latest |
 | **Unit Tests** | PR → master | ubuntu-latest |
 | **UI Tests** | PR → master | macos-latest (emulator API 29) |
+| **Coverage** | push → master | ubuntu-latest (JDK 21) |
 
 Coverage reports are generated with **JaCoCo** (HTML + XML) and uploaded to **Codecov**. OpenGL, Compose UI, and Activity layers are excluded from coverage metrics.
 

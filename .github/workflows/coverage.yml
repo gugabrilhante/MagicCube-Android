@@ -1,11 +1,11 @@
-name: Unit Tests
+name: Coverage
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 jobs:
-  unit-tests:
+  coverage:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,12 +22,12 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run unit tests
-        run: ./gradlew testDebugUnitTest
+      - name: Run coverage
+        run: ./gradlew clean testDebugUnitTest jacocoTestReport --stacktrace
 
-      - name: Upload test report
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
         with:
-          name: unit-test-report
-          path: app/build/reports/tests/testDebugUnitTest/
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+          fail_ci_if_error: true
