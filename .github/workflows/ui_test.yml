@@ -6,7 +6,7 @@ on:
 
 jobs:
   ui-tests:
-    runs-on: macos-latest
+    runs-on: macos-14
     timeout-minutes: 60
 
     steps:
@@ -26,11 +26,10 @@ jobs:
       - name: Run UI tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 32
-          target: google_apis
+          api-level: 34
+          target: aosp_atd
           arch: arm64-v8a
-          profile: pixel_5
           force-avd-creation: true
           disable-animations: true
-          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim
-          script: ./gradlew connectedDebugAndroidTest --no-daemon --no-parallel --max-workers=1
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: ./gradlew connectedDebugAndroidTest --no-daemon
