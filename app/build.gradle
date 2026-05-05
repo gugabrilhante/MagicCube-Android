@@ -75,6 +75,16 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/LICENSE.md',
+                'META-INF/LICENSE-notice.md',
+                'META-INF/NOTICE.md',
+            ]
+        }
+    }
+
     testOptions {
         unitTests.all {
             useJUnit()
