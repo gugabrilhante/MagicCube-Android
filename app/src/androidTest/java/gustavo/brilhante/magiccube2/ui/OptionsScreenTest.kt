@@ -67,6 +67,6 @@ class OptionsScreenTest {
         composeRule.setContent {
             OptionsScreen(viewModel = viewModel)
         }
-        composeRule.onNodeWithText("Reset", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Reset to default", ignoreCase = true).assertIsDisplayed()
     }
 }
