@@ -1,0 +1,22 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 40%
+        threshold: 1%
+    patch:
+      default:
+        target: 40%
+        threshold: 1%
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
+
+github_checks:
+  annotations: true
+
+codecov:
+  notify:
+    require_ci_to_pass: yes

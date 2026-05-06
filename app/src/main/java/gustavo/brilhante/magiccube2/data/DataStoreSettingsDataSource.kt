@@ -15,7 +15,10 @@ import java.io.IOException
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "cube_settings")
 
-class DataStoreSettingsDataSource(private val context: Context) : SettingsLocalDataSource {
+class DataStoreSettingsDataSource(
+    private val context: Context,
+    private val dataStore: DataStore<Preferences> = context.dataStore
+) : SettingsLocalDataSource {
 
     private object Keys {
         val SHUFFLE = intPreferencesKey("shuffle")
@@ -25,7 +28,7 @@ class DataStoreSettingsDataSource(private val context: Context) : SettingsLocalD
 
     private val defaults = CubeSettings()
 
-    override val settingsFlow: Flow<CubeSettings> = context.dataStore.data
+    override val settingsFlow: Flow<CubeSettings> = dataStore.data
         .catch { e ->
             if (e is IOException) {
                 emit(emptyPreferences())
@@ -42,7 +45,7 @@ class DataStoreSettingsDataSource(private val context: Context) : SettingsLocalD
         }
 
     override suspend fun save(settings: CubeSettings) {
-        context.dataStore.edit { prefs ->
+        dataStore.edit { prefs ->
             prefs[Keys.SHUFFLE] = settings.shuffle
             prefs[Keys.SPEED] = settings.speed
             prefs[Keys.SIZE] = settings.size

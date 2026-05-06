@@ -1,8 +1,47 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+    id 'jacoco'
+}
+
+jacoco {
+    toolVersion = "0.8.12"
+}
+
+tasks.withType(Test).configureEach {
+    jacoco.includeNoLocationClasses = true
+    jacoco.excludes = ['jdk.internal.*']
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+
+    def fileFilter = [
+        '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*',
+        '**/*Test*.*', 'android/**/*.*',
+        '**/*$ViewInjector*.*', '**/*$ViewBinder*.*', '**/Lambda$*.class',
+        '**/Lambda.class', '**/*Lambda.class', '**/*Lambda$*.class',
+        '**/*_MembersInjector.class', '**/Dagger*.*', '**/*_Factory.class',
+        '**/*_Provide*Factory.class', '**/*Extensions*.*',
+        '**/*_Impl*', '**/*_HiltModules*', '**/*ComposableSingletons*',
+        '**/*Navigation*', '**/*Route*', '**/ui/theme/**', '**/*ColorKt*',
+        // Exclude OpenGL and UI components from coverage if they are hard to test
+        '**/gustavo/brilhante/magiccube2/grafic/**',
+        '**/gustavo/brilhante/magiccube2/compose/**',
+        '**/gustavo/brilhante/magiccube2/activity/**'
+    ]
+    def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def mainSrc = "${project.projectDir}/src/main/java"
+
+    sourceDirectories.setFrom(files([mainSrc]))
+    classDirectories.setFrom(files([debugTree]))
+    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
+        "jacoco/testDebugUnitTest.exec"
+    ]))
 }
 
 android {
@@ -27,18 +66,34 @@ android {
         compose = true
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
+    }
+
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/LICENSE.md',
+                'META-INF/LICENSE-notice.md',
+                'META-INF/NOTICE.md',
+            ]
+        }
     }
 
     testOptions {
         unitTests.all {
             useJUnit()
         }
+
+        // Android instrumented tests configuration
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
@@ -70,8 +125,14 @@ dependencies {
     // Testes
     testImplementation libs.junit
     testImplementation libs.kotlinx.coroutines.test
+    testImplementation libs.mockk
+    testImplementation libs.turbine
     androidTestImplementation platform(libs.compose.bom)
     androidTestImplementation libs.compose.ui.test.junit4
+    androidTestImplementation libs.mockk.android
+
+    // AndroidX Test Orchestrator for better test execution
+    androidTestUtil libs.androidx.test.orchestrator
 
     // Debug tools
     debugImplementation libs.compose.ui.tooling

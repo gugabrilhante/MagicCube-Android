@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import gustavo.brilhante.magiccube2.R
@@ -191,6 +192,7 @@ fun OptionsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(52.dp)
+                                    .testTag("reset_button")
                             ) {
                                 Text(
                                     text  = stringResource(R.string.reset_to_default),
@@ -251,7 +253,7 @@ private fun SettingSliderRow(
             onValueChange = { onValueChange(it.roundToInt()) },
             valueRange    = valueRange,
             steps         = steps,
-            modifier      = Modifier.fillMaxWidth()
+            modifier      = Modifier.fillMaxWidth().testTag("slider_$label")
         )
     }
 }
