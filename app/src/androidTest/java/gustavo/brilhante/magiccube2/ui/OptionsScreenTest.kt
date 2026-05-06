@@ -2,7 +2,10 @@ package gustavo.brilhante.magiccube2.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollTo
+import gustavo.brilhante.magiccube2.activity.ui.theme.MagicCubeAndroidTheme
 import gustavo.brilhante.magiccube2.compose.OptionsScreen
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
@@ -41,32 +44,55 @@ class OptionsScreenTest {
     @Test
     fun optionsScreen_showsShuffleLabel() {
         composeRule.setContent {
-            OptionsScreen(viewModel = viewModel)
+            MagicCubeAndroidTheme {
+                OptionsScreen(viewModel = viewModel)
+            }
         }
-        composeRule.onNodeWithText("Shuffle", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Shuffle", ignoreCase = true)
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
     fun optionsScreen_showsSpeedLabel() {
         composeRule.setContent {
-            OptionsScreen(viewModel = viewModel)
+            MagicCubeAndroidTheme {
+                OptionsScreen(viewModel = viewModel)
+            }
         }
-        composeRule.onNodeWithText("Speed", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Speed", ignoreCase = true)
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
     fun optionsScreen_showsSizeLabel() {
         composeRule.setContent {
-            OptionsScreen(viewModel = viewModel)
+            MagicCubeAndroidTheme {
+                OptionsScreen(viewModel = viewModel)
+            }
         }
-        composeRule.onNodeWithText("Size", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Size", ignoreCase = true)
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     @Test
     fun optionsScreen_showsResetButton() {
         composeRule.setContent {
-            OptionsScreen(viewModel = viewModel)
+            MagicCubeAndroidTheme {
+                OptionsScreen(viewModel = viewModel)
+            }
         }
-        composeRule.onNodeWithText("Reset to default", ignoreCase = true).assertIsDisplayed()
+        
+        // Wait for the screen to settle
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("reset_button")
+            .performScrollTo()
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText("Reset to default", ignoreCase = true)
+            .assertIsDisplayed()
     }
 }

@@ -192,6 +192,7 @@ fun OptionsScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(52.dp)
+                                    .testTag("reset_button")
                             ) {
                                 Text(
                                     text  = stringResource(R.string.reset_to_default),

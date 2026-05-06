@@ -9,6 +9,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.test.performScrollTo
 import gustavo.brilhante.magiccube2.activity.MainMenuActivity
 import org.junit.Rule
 import org.junit.Test
@@ -58,7 +59,9 @@ class AppNavigationTest {
         }
 
         // Then
-        composeRule.onNodeWithText("Reset to default", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("reset_button")
+            .performScrollTo()
+            .assertIsDisplayed()
     }
 
     // onOptionsClick() has a 600 ms delay before emitting the navigation event, which the
