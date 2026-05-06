@@ -15,6 +15,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+
+@OptIn(FlowPreview::class)
 class OptionsViewModel(
     private val saveSettings: SaveSettingsUseCase,
     observeSettings: ObserveSettingsUseCase,
@@ -31,9 +36,13 @@ class OptionsViewModel(
 
     init {
         viewModelScope.launch {
-            uiState.collectLatest { state ->
-                saveSettings(state.toSettings())
-            }
+            uiState
+                .map { it.toSettings() }
+                .distinctUntilChanged()
+                .debounce(300)
+                .collectLatest { settings ->
+                    saveSettings(settings)
+                }
         }
     }
 

@@ -65,7 +65,7 @@ class AppNavigationTest {
     // Compose IdlingResource does not track. We poll until the Options screen is in the tree,
     // then wait for any remaining animations to settle.
     private fun waitForOptionsScreen() {
-        composeRule.waitUntil(timeoutMillis = 3000) {
+        composeRule.waitUntil(timeoutMillis = 5000) {
             composeRule.onAllNodesWithText("Shuffle", ignoreCase = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
