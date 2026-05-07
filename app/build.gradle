@@ -35,12 +35,14 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         '**/gustavo/brilhante/magiccube2/activity/**'
     ]
     def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def debugTreeAGP = fileTree(dir: "${buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: fileFilter)
+    def javaTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.setFrom(files([mainSrc]))
-    classDirectories.setFrom(files([debugTree]))
+    classDirectories.setFrom(files([debugTree, debugTreeAGP, javaTree]))
     executionData.setFrom(fileTree(dir: "$buildDir", includes: [
-        "jacoco/testDebugUnitTest.exec"
+        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
     ]))
 }
 
@@ -56,6 +58,9 @@ android {
         versionName "3.0"
     }
     buildTypes {
+        debug {
+            enableUnitTestCoverage true
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
