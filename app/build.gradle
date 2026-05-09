@@ -88,7 +88,7 @@ android {
 
     testOptions {
         unitTests.all {
-            useJUnit()
+            useJUnitPlatform()
         }
 
         // Android instrumented tests configuration
@@ -129,6 +129,9 @@ dependencies {
 
     // Testes
     testImplementation libs.junit
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.launcher
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.mockk
     testImplementation libs.turbine

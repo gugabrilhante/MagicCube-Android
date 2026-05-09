@@ -1,6 +1,5 @@
 package gustavo.brilhante.magiccube2.grafic
 
-import android.opengl.Matrix
 import gustavo.brilhante.magiccube2.presentation.cube.CubeDrawCommand
 import kotlin.math.abs
 
@@ -35,7 +34,7 @@ class PickingService {
             // We need to transform the ray from NDC to the local space of each cubelet.
             // Each cubelet has its own MVP matrix.
             val invertedMvp = FloatArray(16)
-            if (!Matrix.invertM(invertedMvp, 0, command.mvpMatrix, 0)) continue
+            if (!MatrixMath.invertM(invertedMvp, 0, command.mvpMatrix, 0)) continue
 
             // A ray in NDC goes from Z=-1 (near plane) to Z=1 (far plane)
             val nearPointNDC = floatArrayOf(xNdc, yNdc, -1f, 1f)
@@ -66,7 +65,7 @@ class PickingService {
 
     private fun transformPoint(matrix: FloatArray, point: FloatArray): FloatArray {
         val result = FloatArray(4)
-        Matrix.multiplyMV(result, 0, matrix, 0, point, 0)
+        MatrixMath.multiplyMV(result, 0, matrix, 0, point, 0)
         // Perspective divide
         return floatArrayOf(result[0] / result[3], result[1] / result[3], result[2] / result[3])
     }

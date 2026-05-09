@@ -19,6 +19,14 @@ import gustavo.brilhante.magiccube2.presentation.cube.CubeGameInteractor
 import gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel
 import gustavo.brilhante.magiccube2.presentation.options.OptionsViewModel
 import gustavo.brilhante.magiccube2.domain.cube.CubeLogger
+import gustavo.brilhante.magiccube2.grafic.MatrixTracker
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeTraversalEngine
+import gustavo.brilhante.magiccube2.presentation.cube.CubeRenderEngine
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,6 +57,10 @@ val appModule = module {
     // Interaction services — stateless, safe as singletons
     singleOf(::CubeInteractionProcessor)
     singleOf(::PickingService)
+    single<ICubeRotationEngine> { CubeRotationEngine() }
+    single<ICubeProjectionCalculator> { CubeProjectionCalculator() }
+    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker()) }
+    single { CubeRenderEngine(get(), get(), get()) }
     single<CubeLogger> { AndroidCubeLogger() }
 
     // Controller factory — wires domain services into a fresh controller per engine instance
