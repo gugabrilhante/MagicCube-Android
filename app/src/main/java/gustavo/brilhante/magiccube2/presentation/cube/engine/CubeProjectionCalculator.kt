@@ -3,7 +3,7 @@ package gustavo.brilhante.magiccube2.presentation.cube.engine
 import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import kotlin.math.tan
 
-class CubeProjectionCalculator : ICubeProjectionCalculator {
+class CubeProjectionCalculator(private val matrixMath: MatrixMath) : ICubeProjectionCalculator {
     override val projectionMatrix = FloatArray(16)
 
     override fun onSurfaceChanged(width: Int, height: Int) {
@@ -14,7 +14,7 @@ class CubeProjectionCalculator : ICubeProjectionCalculator {
         val fov = 80.0f / 57.3f
         val size = zNear * tan(fov / 2.0).toFloat()
         val aspectRatio = width.toFloat() / height
-        MatrixMath.frustumM(
+        matrixMath.frustumM(
             projectionMatrix, 0,
             -size, size,
             -size / aspectRatio, size / aspectRatio,

@@ -7,7 +7,7 @@ import kotlin.math.*
  * Pure Kotlin implementation of common 4x4 matrix operations.
  * Replaces android.opengl.Matrix for unit test compatibility and consistent behavior.
  */
-object MatrixMath {
+class MatrixMath {
 
     fun setIdentityM(sm: FloatArray, offset: Int) {
         for (i in 0 until 16) {
@@ -39,6 +39,10 @@ object MatrixMath {
         val c = cos(rad)
 
         val len = sqrt(x * x + y * y + z * z)
+        if (len < 1e-6) {
+            setIdentityM(rm, rmOffset)
+            return
+        }
         val nx = x / len
         val ny = y / len
         val nz = z / len
@@ -162,8 +166,6 @@ object MatrixMath {
     fun invertM(mInv: FloatArray, mInvOffset: Int, m: FloatArray, mOffset: Int): Boolean {
         val src = FloatArray(16)
         System.arraycopy(m, mOffset, src, 0, 16)
-        val dst = mInv
-        val off = mInvOffset
 
         val v0 = src[0] * src[5] - src[1] * src[4]
         val v1 = src[0] * src[6] - src[2] * src[4]
@@ -182,22 +184,22 @@ object MatrixMath {
         if (abs(det) < 1e-6) return false
         val invDet = 1f / det
 
-        dst[off + 0] = (src[5] * v11 - src[6] * v10 + src[7] * v9) * invDet
-        dst[off + 1] = (src[2] * v10 - src[1] * v11 - src[3] * v9) * invDet
-        dst[off + 2] = (src[13] * v5 - src[14] * v4 + src[15] * v3) * invDet
-        dst[off + 3] = (src[10] * v4 - src[9] * v5 - src[11] * v3) * invDet
-        dst[off + 4] = (src[6] * v8 - src[4] * v11 - src[7] * v7) * invDet
-        dst[off + 5] = (src[0] * v11 - src[2] * v8 + src[3] * v7) * invDet
-        dst[off + 6] = (src[14] * v2 - src[12] * v5 - src[15] * v1) * invDet
-        dst[off + 7] = (src[8] * v5 - src[10] * v2 + src[11] * v1) * invDet
-        dst[off + 8] = (src[4] * v10 - src[5] * v8 + src[7] * v6) * invDet
-        dst[off + 9] = (src[1] * v8 - src[0] * v10 - src[3] * v6) * invDet
-        dst[off + 10] = (src[12] * v4 - src[13] * v2 + src[15] * v0) * invDet
-        dst[off + 11] = (src[9] * v2 - src[8] * v4 - src[11] * v0) * invDet
-        dst[off + 12] = (src[5] * v7 - src[4] * v9 - src[6] * v6) * invDet
-        dst[off + 13] = (src[0] * v9 - src[1] * v7 + src[2] * v6) * invDet
-        dst[off + 14] = (src[13] * v1 - src[12] * v3 - src[14] * v0) * invDet
-        dst[off + 15] = (src[8] * v3 - src[9] * v1 + src[10] * v0) * invDet
+        mInv[mInvOffset + 0] = (src[5] * v11 - src[6] * v10 + src[7] * v9) * invDet
+        mInv[mInvOffset + 1] = (src[2] * v10 - src[1] * v11 - src[3] * v9) * invDet
+        mInv[mInvOffset + 2] = (src[13] * v5 - src[14] * v4 + src[15] * v3) * invDet
+        mInv[mInvOffset + 3] = (src[10] * v4 - src[9] * v5 - src[11] * v3) * invDet
+        mInv[mInvOffset + 4] = (src[6] * v8 - src[4] * v11 - src[7] * v7) * invDet
+        mInv[mInvOffset + 5] = (src[0] * v11 - src[2] * v8 + src[3] * v7) * invDet
+        mInv[mInvOffset + 6] = (src[14] * v2 - src[12] * v5 - src[15] * v1) * invDet
+        mInv[mInvOffset + 7] = (src[8] * v5 - src[10] * v2 + src[11] * v1) * invDet
+        mInv[mInvOffset + 8] = (src[4] * v10 - src[5] * v8 + src[7] * v6) * invDet
+        mInv[mInvOffset + 9] = (src[1] * v8 - src[0] * v10 - src[3] * v6) * invDet
+        mInv[mInvOffset + 10] = (src[12] * v4 - src[13] * v2 + src[15] * v0) * invDet
+        mInv[mInvOffset + 11] = (src[9] * v2 - src[8] * v4 - src[11] * v0) * invDet
+        mInv[mInvOffset + 12] = (src[5] * v7 - src[4] * v9 - src[6] * v6) * invDet
+        mInv[mInvOffset + 13] = (src[0] * v9 - src[1] * v7 + src[2] * v6) * invDet
+        mInv[mInvOffset + 14] = (src[13] * v1 - src[12] * v3 - src[14] * v0) * invDet
+        mInv[mInvOffset + 15] = (src[8] * v3 - src[9] * v1 + src[10] * v0) * invDet
 
         return true
     }

@@ -24,7 +24,10 @@ data class RotationState(
     val snapTarget: Float = 90f,
 )
 
-class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
+class CubeGameEngine(
+    shuffleCount: Int,
+    private val matrixMath: MatrixMath
+) : ICubeGameEngine {
 
     // --- Cube objects ---
     override val cubes: MutableList<Cube> = mutableListOf()
@@ -164,7 +167,7 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
         if (dpLenSq < 1e-6f) return
 
         // 3. Rotation axis = N × Dp (all vectors in local cube space)
-        val axis = MatrixMath.normalize(MatrixMath.crossProduct(normal, dp))
+        val axis = matrixMath.normalize(matrixMath.crossProduct(normal, dp))
 
         // 4. Snap to dominant axis component and select layer from cubelet position.
         val ax = abs(axis.x)

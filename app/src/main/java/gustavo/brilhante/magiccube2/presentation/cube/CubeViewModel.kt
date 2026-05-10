@@ -26,7 +26,7 @@ class CubeViewModel(
     observeSettings: ObserveSettingsUseCase,
     private val engineFactory: CubeGameEngineFactory,
     private val controllerFactory: CubeControllerFactory,
-    private val renderEngine: CubeRenderEngine = CubeRenderEngine()
+    private val renderEngine: CubeRenderEngine
 ) : ViewModel() {
 
     private val _settingsState = MutableStateFlow<CubeSettings?>(null)

@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.cube.engine
 
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -11,7 +12,7 @@ class CubeProjectionCalculatorTest {
 
     @BeforeEach
     fun setUp() {
-        calculator = CubeProjectionCalculator()
+        calculator = CubeProjectionCalculator(MatrixMath())
     }
 
     @Test

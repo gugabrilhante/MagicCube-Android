@@ -2,9 +2,6 @@ package gustavo.brilhante.magiccube2.presentation.cube
 
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
-import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
-import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
-import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeProjectionCalculator
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeRotationEngine
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeTraversalEngine
@@ -18,9 +15,9 @@ import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeTraversalEngin
  * thread; cross-thread visibility and atomicity are guaranteed by internal engines.
  */
 class CubeRenderEngine(
-    private val rotationEngine: ICubeRotationEngine = CubeRotationEngine(),
-    private val projectionCalculator: ICubeProjectionCalculator = CubeProjectionCalculator(),
-    private val traversalEngine: ICubeTraversalEngine = CubeTraversalEngine()
+    private val rotationEngine: ICubeRotationEngine,
+    private val projectionCalculator: ICubeProjectionCalculator,
+    private val traversalEngine: ICubeTraversalEngine
 ) {
 
     val projectionMatrix: FloatArray get() = projectionCalculator.projectionMatrix

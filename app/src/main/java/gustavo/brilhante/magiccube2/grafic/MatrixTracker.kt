@@ -3,12 +3,12 @@ package gustavo.brilhante.magiccube2.grafic
 import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import java.util.Stack
 
-class MatrixTracker : IMatrixTracker {
+class MatrixTracker(private val matrixMath: MatrixMath) : IMatrixTracker {
     private val stack = Stack<FloatArray>()
     private var current = FloatArray(16)
 
     init {
-        MatrixMath.setIdentityM(current, 0)
+        matrixMath.setIdentityM(current, 0)
     }
 
     override fun push() {
@@ -24,11 +24,11 @@ class MatrixTracker : IMatrixTracker {
     }
 
     override fun translate(x: Float, y: Float, z: Float) {
-        MatrixMath.translateM(current, 0, x, y, z)
+        matrixMath.translateM(current, 0, x, y, z)
     }
 
     override fun rotate(angle: Float, x: Float, y: Float, z: Float) {
-        MatrixMath.rotateM(current, 0, angle, x, y, z)
+        matrixMath.rotateM(current, 0, angle, x, y, z)
     }
 
     override fun getZ(): Float = current[14]
@@ -42,7 +42,7 @@ class MatrixTracker : IMatrixTracker {
     }
 
     override fun reset() {
-        MatrixMath.setIdentityM(current, 0)
+        matrixMath.setIdentityM(current, 0)
         stack.clear()
     }
 }

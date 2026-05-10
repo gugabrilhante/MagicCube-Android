@@ -9,7 +9,8 @@ import gustavo.brilhante.magiccube2.domain.model.Vector3
 import kotlin.math.abs
 
 class FaceInteractionCalculator(
-    private val coordinateTransformer: CoordinateTransformer
+    private val coordinateTransformer: CoordinateTransformer,
+    private val matrixMath: MatrixMath
 ) {
 
     data class DragOnFaceResult(
@@ -37,8 +38,8 @@ class FaceInteractionCalculator(
             t1.y * w1 + t2.y * w2,
             t1.z * w1 + t2.z * w2,
         )
-        val drag = MatrixMath.normalize(rawDrag)
-        val axis = MatrixMath.normalize(MatrixMath.crossProduct(normal, drag))
+        val drag = matrixMath.normalize(rawDrag)
+        val axis = matrixMath.normalize(matrixMath.crossProduct(normal, drag))
         return DragOnFaceResult(DragVector(drag), RotationAxis(axis))
     }
 

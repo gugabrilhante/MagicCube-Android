@@ -7,11 +7,11 @@ import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.IMatrixTracker
 import gustavo.brilhante.magiccube2.domain.math.MatrixMath
-import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import gustavo.brilhante.magiccube2.presentation.cube.CubeDrawCommand
 
 class CubeTraversalEngine(
-    private val matrixTracker: IMatrixTracker = MatrixTracker()
+    private val matrixTracker: IMatrixTracker,
+    private val matrixMath: MatrixMath
 ) : ICubeTraversalEngine {
 
     private val renderPosition = RenderPosition()
@@ -111,7 +111,7 @@ class CubeTraversalEngine(
 
     private fun computeMVP(projectionMatrix: FloatArray): FloatArray {
         val mvp = FloatArray(16)
-        MatrixMath.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
+        matrixMath.multiplyMM(mvp, 0, projectionMatrix, 0, matrixTracker.getMatrix(), 0)
         return mvp
     }
 

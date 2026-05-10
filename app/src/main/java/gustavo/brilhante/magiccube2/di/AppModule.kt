@@ -30,6 +30,7 @@ import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeProjectionCalc
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeRotationEngine
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeTraversalEngine
 import gustavo.brilhante.magiccube2.presentation.cube.CubeRenderEngine
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,9 +51,13 @@ val appModule = module {
     // Domain — use cases
     singleOf(::SaveSettingsUseCase)
     singleOf(::ObserveSettingsUseCase)
+    single { MatrixMath() }
 
     // Engine factory — creates ICubeGameEngine instances
-    single<CubeGameEngineFactory> { CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount) } }
+    single<CubeGameEngineFactory> {
+        val matrixMath = get<MatrixMath>()
+        CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount, matrixMath) }
+    }
 
     // System utilities
     single<TimeProvider> { TimeProvider { SystemClock.elapsedRealtime() } }
@@ -64,8 +69,8 @@ val appModule = module {
     singleOf(::VisibleFacesResolver)
     singleOf(::PickingService)
     single<ICubeRotationEngine> { CubeRotationEngine() }
-    single<ICubeProjectionCalculator> { CubeProjectionCalculator() }
-    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker()) }
+    single<ICubeProjectionCalculator> { CubeProjectionCalculator(get()) }
+    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker(get()), get()) }
     single { CubeRenderEngine(get(), get(), get()) }
     single<CubeLogger> { AndroidCubeLogger() }
 
