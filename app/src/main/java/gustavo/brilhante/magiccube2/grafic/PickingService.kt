@@ -1,5 +1,7 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import gustavo.brilhante.magiccube2.presentation.cube.CubeDrawCommand
 import kotlin.math.abs
 
@@ -10,7 +12,7 @@ class PickingService {
 
     data class PickingResult(
         val cubelet: Cube,
-        val faceNormal: Triple<Float, Float, Float>
+        val faceNormal: Vector3
     )
 
     /**
@@ -74,10 +76,10 @@ class PickingService {
      * Ray-AABB (Axis-Aligned Bounding Box) intersection test for a unit cube (-1 to 1).
      * Returns the distance (t) and the normal of the hit face.
      */
-    private fun intersectAABB(origin: FloatArray, dir: FloatArray): Pair<Float, Triple<Float, Float, Float>>? {
+    private fun intersectAABB(origin: FloatArray, dir: FloatArray): Pair<Float, Vector3>? {
         var tMin = -Float.MAX_VALUE
         var tMax = Float.MAX_VALUE
-        var hitNormal = Triple(0f, 0f, 0f)
+        var hitNormal = Vector3.Zero
 
         for (i in 0..2) {
             if (abs(dir[i]) < 1e-6) {
@@ -98,9 +100,9 @@ class PickingService {
                 if (t1 > tMin) {
                     tMin = t1
                     hitNormal = when (i) {
-                        0 -> Triple(n1, 0f, 0f)
-                        1 -> Triple(0f, n1, 0f)
-                        else -> Triple(0f, 0f, n1)
+                        0 -> Vector3(n1, 0f, 0f)
+                        1 -> Vector3(0f, n1, 0f)
+                        else -> Vector3(0f, 0f, n1)
                     }
                 }
                 tMax = minOf(tMax, t2)

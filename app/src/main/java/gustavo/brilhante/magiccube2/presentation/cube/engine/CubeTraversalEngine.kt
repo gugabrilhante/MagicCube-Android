@@ -6,7 +6,7 @@ import gustavo.brilhante.magiccube2.grafic.CubeAxis
 import gustavo.brilhante.magiccube2.grafic.CubeStepDirection
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.IMatrixTracker
-import gustavo.brilhante.magiccube2.grafic.MatrixMath
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import gustavo.brilhante.magiccube2.presentation.cube.CubeDrawCommand
 

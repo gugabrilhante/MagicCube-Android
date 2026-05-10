@@ -1,5 +1,6 @@
-package gustavo.brilhante.magiccube2.grafic
+package gustavo.brilhante.magiccube2.domain.math
 
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import kotlin.math.*
 
 /**
@@ -104,9 +105,6 @@ object MatrixMath {
         }
     }
 
-    /**
-     * Multiplies a 4 element vector by a 4x4 matrix and stores the result in a 4-element column vector.
-     */
     fun multiplyMV(result: FloatArray, resultOffset: Int, lhs: FloatArray, lhsOffset: Int, rhs: FloatArray, rhsOffset: Int) {
         val r0 = lhs[lhsOffset + 0] * rhs[rhsOffset + 0] +
                 lhs[lhsOffset + 4] * rhs[rhsOffset + 1] +
@@ -162,13 +160,11 @@ object MatrixMath {
     }
 
     fun invertM(mInv: FloatArray, mInvOffset: Int, m: FloatArray, mOffset: Int): Boolean {
-        // Simple 4x4 matrix inversion implementation
         val src = FloatArray(16)
         System.arraycopy(m, mOffset, src, 0, 16)
         val dst = mInv
         val off = mInvOffset
 
-        val temp = FloatArray(12)
         val v0 = src[0] * src[5] - src[1] * src[4]
         val v1 = src[0] * src[6] - src[2] * src[4]
         val v2 = src[0] * src[7] - src[3] * src[4]
@@ -206,26 +202,20 @@ object MatrixMath {
         return true
     }
 
-    /**
-     * Calculates the cross product of two 3D vectors.
-     */
-    fun crossProduct(v1: Triple<Float, Float, Float>, v2: Triple<Float, Float, Float>): Triple<Float, Float, Float> {
-        return Triple(
-            v1.second * v2.third - v1.third * v2.second,
-            v1.third * v2.first - v1.first * v2.third,
-            v1.first * v2.second - v1.second * v2.first
+    fun crossProduct(v1: Vector3, v2: Vector3): Vector3 {
+        return Vector3(
+            v1.y * v2.z - v1.z * v2.y,
+            v1.z * v2.x - v1.x * v2.z,
+            v1.x * v2.y - v1.y * v2.x
         )
     }
 
-    /**
-     * Normalizes a 3D vector.
-     */
-    fun normalize(v: Triple<Float, Float, Float>): Triple<Float, Float, Float> {
-        val length = sqrt(v.first * v.first + v.second * v.second + v.third * v.third)
+    fun normalize(v: Vector3): Vector3 {
+        val length = sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
         return if (length < 1e-6) {
-            Triple(0f, 0f, 0f)
+            Vector3.Zero
         } else {
-            Triple(v.first / length, v.second / length, v.third / length)
+            Vector3(v.x / length, v.y / length, v.z / length)
         }
     }
 }

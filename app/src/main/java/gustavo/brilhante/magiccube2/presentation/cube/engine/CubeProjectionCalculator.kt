@@ -1,6 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.cube.engine
 
-import gustavo.brilhante.magiccube2.grafic.MatrixMath
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import kotlin.math.tan
 
 class CubeProjectionCalculator : ICubeProjectionCalculator {

@@ -5,7 +5,10 @@ import gustavo.brilhante.magiccube2.data.DataStoreSettingsDataSource
 import gustavo.brilhante.magiccube2.data.SettingsLocalDataSource
 import gustavo.brilhante.magiccube2.data.SettingsRepositoryImpl
 import gustavo.brilhante.magiccube2.domain.TimeProvider
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
+import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
+import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
+import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
 import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
@@ -55,7 +58,10 @@ val appModule = module {
     single<TimeProvider> { TimeProvider { SystemClock.elapsedRealtime() } }
 
     // Interaction services — stateless, safe as singletons
-    singleOf(::CubeInteractionProcessor)
+    singleOf(::GestureClassifier)
+    singleOf(::CoordinateTransformer)
+    singleOf(::FaceInteractionCalculator)
+    singleOf(::VisibleFacesResolver)
     singleOf(::PickingService)
     single<ICubeRotationEngine> { CubeRotationEngine() }
     single<ICubeProjectionCalculator> { CubeProjectionCalculator() }
@@ -66,7 +72,7 @@ val appModule = module {
     // Controller factory — wires domain services into a fresh controller per engine instance
     single<CubeControllerFactory> {
         CubeControllerFactory { engine ->
-            CubeGameInteractor(engine, get(), get(), get(), get())
+            CubeGameInteractor(engine, get(), get(), get(), get(), get(), get(), get())
         }
     }
 

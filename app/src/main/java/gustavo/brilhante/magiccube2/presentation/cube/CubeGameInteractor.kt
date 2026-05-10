@@ -1,9 +1,14 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
 import gustavo.brilhante.magiccube2.domain.TimeProvider
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
+import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
+import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
+import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
 import gustavo.brilhante.magiccube2.domain.cube.CubeLogger
 import gustavo.brilhante.magiccube2.domain.cube.MovementType
+import gustavo.brilhante.magiccube2.domain.model.Vector2
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import gustavo.brilhante.magiccube2.grafic.ActiveSlice
 import gustavo.brilhante.magiccube2.grafic.ColorLetter
 import gustavo.brilhante.magiccube2.grafic.Cube
@@ -14,26 +19,21 @@ import kotlin.math.abs
 
 /**
  * Application-service layer for cube touch interaction.
- *
- * Owns all drag, snap, and swipe orchestration that previously lived in the ViewModel.
- * Has no Android or OpenGL imports — every behaviour is unit-testable by asserting on the
- * [CubeControllerEffect] lists returned from each method.
- *
- * The only mutable state it holds is in-flight gesture data (start position, accumulated
- * angle, selected cubelet). All rendering and UI-state mutations are delegated back to the
- * ViewModel via [CubeControllerEffect]s.
  */
 class CubeGameInteractor(
     private val engine: ICubeGameEngine,
-    private val interaction: CubeInteractionProcessor,
+    private val gestureClassifier: GestureClassifier,
+    private val coordinateTransformer: CoordinateTransformer,
+    private val faceInteractionCalculator: FaceInteractionCalculator,
+    private val visibleFacesResolver: VisibleFacesResolver,
     private val pickingService: PickingService,
     private val timeProvider: TimeProvider,
     private val logger: CubeLogger,
 ) : ICubeInteractor {
 
     private var selectedCubelet: Cube? = null
-    private var selectedFaceNormal: Triple<Float, Float, Float>? = null
-    private var localDragVector = Triple(0f, 0f, 0f)
+    private var selectedFaceNormal: Vector3? = null
+    private var localDragVector = Vector3.Zero
     private var accumulatedDragAngle = 0f
 
     private var startX = 0f
@@ -43,7 +43,7 @@ class CubeGameInteractor(
     private var verticalOrientation = 1
 
     override fun classifyMovement(dt: Long, dx: Float, dy: Float): MovementType =
-        interaction.classifyMovement(dt, dx, dy)
+        gestureClassifier.classifyMovement(dt, dx, dy)
 
     override fun onActionDown(
         x: Float,
@@ -79,7 +79,7 @@ class CubeGameInteractor(
         touchScaleFactor: Float,
     ): List<CubeControllerEffect> {
         val dt = timeProvider.currentTimeMillis() - startTime
-        if (interaction.classifyMovement(dt, x - startX, y - startY) != MovementType.DRAG) return emptyList()
+        if (gestureClassifier.classifyMovement(dt, x - startX, y - startY) != MovementType.DRAG) return emptyList()
 
         val cubelet = selectedCubelet
         if (cubelet == null) {
@@ -88,14 +88,13 @@ class CubeGameInteractor(
         }
 
         val normal = selectedFaceNormal ?: return emptyList()
-        val screenDx = x - previousX
-        val screenDy = y - previousY
-        val (localDx, localDy) = interaction.computeLocalDrag(screenDx, screenDy, angleRotateX, angleRotateY)
+        val screenDelta = Vector2(x - previousX, y - previousY)
+        val localDelta = coordinateTransformer.computeLocalDrag(screenDelta, angleRotateX, angleRotateY)
 
         val wasSliceNone = engine.rotation.activeSlice == ActiveSlice.NONE
-        if (wasSliceNone) logDragStart(screenDx, screenDy, angleRotateX, angleRotateY)
+        if (wasSliceNone) logDragStart(screenDelta.x, screenDelta.y, angleRotateX, angleRotateY)
 
-        localDragVector = interaction.computeDragOnFace(localDx, localDy, normal, angleRotateX, angleRotateY).localDragVector
+        localDragVector = faceInteractionCalculator.computeDragOnFace(screenDelta, normal, angleRotateX, angleRotateY).localDragVector.vector
 
         // Lock the active slice on the first drag frame — read back immediately.
         if (engine.rotation.activeSlice == ActiveSlice.NONE) {
@@ -103,9 +102,9 @@ class CubeGameInteractor(
         }
         if (engine.rotation.activeSlice == ActiveSlice.NONE) return emptyList()
 
-        accumulatedDragAngle += interaction.computeSliceDelta(
-            localDx, localDy, normal, angleRotateX, angleRotateY,
-        ) * CubeInteractionProcessor.DRAG_TO_ANGLE_SCALE
+        accumulatedDragAngle += faceInteractionCalculator.computeSliceDelta(
+            screenDelta, normal, angleRotateX, angleRotateY,
+        ) * DRAG_TO_ANGLE_SCALE
 
         val effects = mutableListOf<CubeControllerEffect>(
             CubeControllerEffect.UpdateSliceAngle(accumulatedDragAngle),
@@ -131,7 +130,7 @@ class CubeGameInteractor(
             effects += CubeControllerEffect.SnapSlice(resolveSnapAngle(engine.rotatedAngle))
         } else {
             effects += CubeControllerEffect.StartInertia
-            resolveSwipeSense(interaction.classifyMovement(dt, dx, dy))
+            resolveSwipeSense(gestureClassifier.classifyMovement(dt, dx, dy))
                 ?.let { effects += CubeControllerEffect.TriggerSwipeRotation(it) }
         }
 
@@ -150,13 +149,13 @@ class CubeGameInteractor(
     private fun resetGestureState() {
         selectedCubelet = null
         selectedFaceNormal = null
-        localDragVector = Triple(0f, 0f, 0f)
+        localDragVector = Vector3.Zero
         accumulatedDragAngle = 0f
     }
 
     private fun resolveSnapAngle(rotatedAngle: Float): Float = when {
-        rotatedAngle >= CubeInteractionProcessor.SNAP_THRESHOLD  ->  90f
-        rotatedAngle <= -CubeInteractionProcessor.SNAP_THRESHOLD -> -90f
+        rotatedAngle >= SNAP_THRESHOLD  ->  90f
+        rotatedAngle <= -SNAP_THRESHOLD -> -90f
         else -> 0f
     }
 
@@ -174,16 +173,16 @@ class CubeGameInteractor(
         logger.d(TAG, "Selected cubelet: front=${c.getFrontSide().name} back=${c.getBackSide().name} " +
                 "left=${c.getLeftSide().name} right=${c.getRightSide().name} " +
                 "up=${c.getUpperSide().name} down=${c.getDownSide().name}")
-        val (nx, ny, nz) = result.faceNormal
+        val n = result.faceNormal
         val faceColor = when {
-            nz >  0.5f -> c.getFrontSide()
-            nz < -0.5f -> c.getBackSide()
-            nx >  0.5f -> c.getRightSide()
-            nx < -0.5f -> c.getLeftSide()
-            ny >  0.5f -> c.getUpperSide()
+            n.z >  0.5f -> c.getFrontSide()
+            n.z < -0.5f -> c.getBackSide()
+            n.x >  0.5f -> c.getRightSide()
+            n.x < -0.5f -> c.getLeftSide()
+            n.y >  0.5f -> c.getUpperSide()
             else       -> c.getDownSide()
         }
-        logger.d(TAG, "Touched face: normal=(%.1f,%.1f,%.1f) color=${faceColor.name}".format(nx, ny, nz))
+        logger.d(TAG, "Touched face: normal=(%.1f,%.1f,%.1f) color=${faceColor.name}".format(n.x, n.y, n.z))
     }
 
     private fun logDragStart(screenDx: Float, screenDy: Float, angleRotateX: Float, angleRotateY: Float) {
@@ -193,7 +192,7 @@ class CubeGameInteractor(
             else -> "down"
         }
         logger.d(TAG, "Drag direction: $dir (dx=%.1f dy=%.1f)".format(screenDx, screenDy))
-        logger.d(TAG, "Visible faces: ${interaction.visibleFaceSlices(angleRotateX, angleRotateY)}")
+        logger.d(TAG, "Visible faces: ${visibleFacesResolver.visibleFaceSlices(angleRotateX, angleRotateY)}")
     }
 
     private fun logSliceLocked(angleRotateX: Float, angleRotateY: Float) {
@@ -223,5 +222,7 @@ class CubeGameInteractor(
 
     companion object {
         private const val TAG = "CubeGame"
+        private const val DRAG_TO_ANGLE_SCALE = 0.3f
+        private const val SNAP_THRESHOLD = 30f
     }
 }
