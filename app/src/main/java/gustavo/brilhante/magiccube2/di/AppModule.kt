@@ -20,8 +20,10 @@ import gustavo.brilhante.magiccube2.presentation.cube.CubeControllerFactory
 import gustavo.brilhante.magiccube2.presentation.cube.CubeGameInteractor
 import gustavo.brilhante.magiccube2.presentation.cube.CubeRenderEngine
 import gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeDrawCommandFactory
 import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
 import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeSliceResolver
 import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeProjectionCalculator
 import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeRotationEngine
@@ -78,7 +80,9 @@ val appModule = module {
 
     single<ICubeRotationEngine> { CubeRotationEngine() }
     single<ICubeProjectionCalculator> { CubeProjectionCalculator(get()) }
-    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker(get()), get()) }
+    single { CubeSliceResolver() }
+    single { CubeDrawCommandFactory(get()) }
+    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker(get()), get(), get()) }
     single { CubeRenderEngine(get(), get(), get()) }
     single<CubeLogger> { AndroidCubeLogger() }
 

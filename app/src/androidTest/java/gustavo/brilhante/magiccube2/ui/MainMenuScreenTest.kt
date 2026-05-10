@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import gustavo.brilhante.magiccube2.compose.MainMenuScreen
@@ -35,7 +36,7 @@ class MainMenuScreenTest {
             )
         }
 
-        composeRule.onNodeWithText("Start", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("start_button").assertIsDisplayed()
     }
 
     @Test
@@ -50,7 +51,7 @@ class MainMenuScreenTest {
             )
         }
 
-        composeRule.onNodeWithText("Options", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("options_button").assertIsDisplayed()
     }
 
     @Test
@@ -65,7 +66,7 @@ class MainMenuScreenTest {
             )
         }
 
-        composeRule.onNodeWithText("Quit", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("quit_button").assertIsDisplayed()
     }
 
     @Test
@@ -82,7 +83,7 @@ class MainMenuScreenTest {
             )
         }
 
-        composeRule.onNodeWithText("Quit", ignoreCase = true).performClick()
+        composeRule.onNodeWithTag("quit_button").performClick()
 
         assertTrue(quitCalled)
     }

@@ -10,20 +10,28 @@ class CubeVisibleFacesCalculatorTest {
 
     @Test
     fun `given zero rotation when getVisibleFaces then returns front faces`() {
-        // At 0,0 only BLUE (Z=1), YELLOW (Y=1), RED (X=1) are potentially visible depending on camera
-        // In the formula: worldZ(nx, ny, nz) = -nx * sinY + ny * cosY * sinX + nz * cosY * cosX
-        // If angleRotateX=0, angleRotateY=0 -> sinY=0, cosY=1, sinX=0, cosX=1
-        // worldZ = nz. So BLUE (0,0,1) should be visible.
-        val result = calculator.getVisibleFaces(0f, 0f)
-        assertTrue(result.contains(CubeFace.BLUE))
+        val faces = calculator.getVisibleFaces(0f, 0f)
+        // worldZ(nx,ny,nz) = -nx * sinY + ny * cosY * sinX + nz * cosY * cosX
+        // For angleX=0, angleY=0: worldZ = nz
+        // nz=1 is BLUE, so BLUE should be visible.
+        assertTrue(faces.contains(CubeFace.BLUE))
     }
 
     @Test
-    fun `given 180 degree Y rotation when getVisibleFaces then returns back face`() {
-        // angleRotateX=180 -> sinY=0, cosY=-1. sinX=0, cosX=1
+    fun `given 180 deg X rotation when getVisibleFaces then returns back faces`() {
+        val faces = calculator.getVisibleFaces(180f, 0f)
+        // sin(180)=0, cos(180)=-1. 
         // worldZ = -nx * 0 + ny * (-1) * 0 + nz * (-1) * 1 = -nz
-        // GREEN (0,0,-1) -> worldZ = -(-1) = 1 (Visible)
-        val result = calculator.getVisibleFaces(180f, 0f)
-        assertTrue(result.contains(CubeFace.GREEN))
+        // nz=-1 is GREEN, so GREEN should be visible.
+        assertTrue(faces.contains(CubeFace.GREEN))
+    }
+
+    @Test
+    fun `given 90 deg Y rotation when getVisibleFaces then returns top face`() {
+        val faces = calculator.getVisibleFaces(0f, 90f)
+        // angleX=0, angleY=90: sinY=0, cosY=1, sinX=1, cosX=0
+        // worldZ = -nx * 0 + ny * 1 * 1 + nz * 1 * 0 = ny
+        // ny=1 is YELLOW, so YELLOW should be visible.
+        assertTrue(faces.contains(CubeFace.YELLOW))
     }
 }

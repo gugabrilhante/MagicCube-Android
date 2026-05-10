@@ -1,40 +1,54 @@
 package gustavo.brilhante.magiccube2.domain.cube
 
+import gustavo.brilhante.magiccube2.domain.model.FaceTangents
 import gustavo.brilhante.magiccube2.domain.model.Vector2
 import gustavo.brilhante.magiccube2.domain.model.Vector3
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CubeSliceInteractionResolverTest {
 
-    private val geometryResolver = CubeFaceGeometryResolver()
-    private val rotationMath = CubeRotationMath()
+    private val geometryResolver = mockk<FaceGeometryResolver>()
+    private val rotationMath = mockk<RotationMath>()
     private val resolver = CubeSliceInteractionResolver(geometryResolver, rotationMath)
 
     @Test
-    fun `given front face and horizontal drag when computeSliceDelta then returns positive delta`() {
-        val normal = Vector3(0f, 0f, 1f) // Front (Blue)
-        val screenDelta = Vector2(100f, 0f) // Drag right
+    fun `computeSliceDelta should return correct delta`() {
+        val normal = Vector3(0f, 0f, 1f)
+        val t1 = Vector3(1f, 0f, 0f)
+        val t2 = Vector3(0f, 1f, 0f)
         
-        val result = resolver.computeSliceDelta(screenDelta, normal, 0f, 0f)
+        every { geometryResolver.faceLocalTangents(normal) } returns FaceTangents(t1, t2)
+        every { rotationMath.localToScreenSpace(t1, 0f, 0f) } returns Vector2(1f, 0f)
+        every { rotationMath.localToScreenSpace(t2, 0f, 0f) } returns Vector2(0f, 1f)
+
+        val screenDelta = Vector2(10f, 0f)
+        val delta = resolver.computeSliceDelta(screenDelta, normal, 0f, 0f)
         
-        // At 0 rotation, front face (0,0,1) has tangents (1,0,0) and (0,1,0)
-        // Screen delta (100,0) matches T1 (1,0,0) which is horizontal.
-        // Sign correction for T1 (1,0,0) is 1.
-        assertTrue(result > 0)
+        // gestureIsHorizontal = true, t1IsHorizontal = true -> useT1 = true
+        // w1 = 10*1 + 0*0 = 10
+        // signCorrection = 1 (t1.y=0 <= 0.5)
+        assertEquals(10f, delta, 0.001f)
     }
 
     @Test
-    fun `given front face and vertical drag when computeSliceDelta then returns positive delta`() {
-        val normal = Vector3(0f, 0f, 1f)
-        val screenDelta = Vector2(0f, 100f) // Drag down
+    fun `computeSliceDelta with sign correction`() {
+        val normal = Vector3(1f, 0f, 0f) // normal.x - normal.z = 1 - 0 = 1 >= 0
+        val t1 = Vector3(0f, 1f, 0f) // chosenTangent.y = 1 > 0.5
+        val t2 = Vector3(0f, 0f, 1f)
         
-        val result = resolver.computeSliceDelta(screenDelta, normal, 0f, 0f)
+        every { geometryResolver.faceLocalTangents(normal) } returns FaceTangents(t1, t2)
+        every { rotationMath.localToScreenSpace(t1, 0f, 0f) } returns Vector2(0f, 1f)
+        every { rotationMath.localToScreenSpace(t2, 0f, 0f) } returns Vector2(1f, 0f)
+
+        val screenDelta = Vector2(0f, 10f) // gestureIsHorizontal = false
+        val delta = resolver.computeSliceDelta(screenDelta, normal, 0f, 0f)
         
-        // Vertical drag matches T2 (0,1,0).
-        // T2.y = 1 (> 0.5), normal.x=0, normal.z=1. normal.x - normal.z = -1. Sign = -1.
-        // result should be negative if it's following the previous logic.
-        assertTrue(result != 0f)
+        // gestureIsHorizontal = false, t1IsHorizontal = false -> useT1 = true
+        // w1 = 0*0 + 10*1 = 10
+        // signCorrection: chosenTangent=t1, t1.y=1 > 0.5. normal.x - normal.z = 1 >= 0 -> 1f
+        assertEquals(10f, delta, 0.001f)
     }
 }
