@@ -1,7 +1,9 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
 import gustavo.brilhante.magiccube2.domain.TimeProvider
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
+import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
+import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
 import gustavo.brilhante.magiccube2.domain.cube.CubeLogger
 import gustavo.brilhante.magiccube2.domain.cube.MovementType
 import gustavo.brilhante.magiccube2.grafic.ICubeGameEngine
@@ -15,7 +17,9 @@ import org.junit.jupiter.api.Test
 class CubeGameInteractorTest {
 
     private val engine = mockk<ICubeGameEngine>(relaxed = true)
-    private val interaction = mockk<CubeInteractionProcessor>(relaxed = true)
+    private val gestureClassifier = mockk<GestureClassifier>(relaxed = true)
+    private val faceInteractionCalculator = mockk<FaceInteractionCalculator>(relaxed = true)
+    private val visibleFacesResolver = mockk<VisibleFacesResolver>(relaxed = true)
     private val pickingService = mockk<PickingService>(relaxed = true)
     private val timeProvider = mockk<TimeProvider>(relaxed = true)
     private val logger = mockk<CubeLogger>(relaxed = true)
@@ -24,7 +28,15 @@ class CubeGameInteractorTest {
 
     @BeforeEach
     fun setUp() {
-        interactor = CubeGameInteractor(engine, interaction, pickingService, timeProvider, logger)
+        interactor = CubeGameInteractor(
+            engine,
+            gestureClassifier,
+            faceInteractionCalculator,
+            visibleFacesResolver,
+            pickingService,
+            timeProvider,
+            logger
+        )
     }
 
     @Test
@@ -38,7 +50,7 @@ class CubeGameInteractorTest {
     @Test
     fun `onActionUp should return StartInertia and SetDraggingSlice(false) when no cubelet selected`() {
         every { pickingService.pickCubelet(any(), any(), any(), any(), any()) } returns null
-        every { interaction.classifyMovement(any(), any(), any()) } returns MovementType.NONE
+        every { gestureClassifier.classifyMovement(any(), any(), any()) } returns MovementType.NONE
 
         interactor.onActionDown(100f, 100f, 1080, 1920, emptyList())
         val effects = interactor.onActionUp(110f, 110f)

@@ -72,7 +72,7 @@ val appModule = module {
     // Controller factory — wires domain services into a fresh controller per engine instance
     single<CubeControllerFactory> {
         CubeControllerFactory { engine ->
-            CubeGameInteractor(engine, get(), get(), get(), get(), get(), get(), get())
+            CubeGameInteractor(engine, get(), get(), get(), get(), get(), get())
         }
     }
 

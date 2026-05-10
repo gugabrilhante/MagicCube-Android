@@ -1,7 +1,10 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
+import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
+import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
 import gustavo.brilhante.magiccube2.domain.cube.MovementType
+import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.PickingService
 import gustavo.brilhante.magiccube2.grafic.RotationState
@@ -31,11 +34,24 @@ class CubeViewModelTest {
         fakeRepository = FakeSettingsRepository()
         fakeTime = 0L
 
+        val gestureClassifier = GestureClassifier()
+        val coordinateTransformer = CoordinateTransformer()
+        val faceInteractionCalculator = FaceInteractionCalculator(coordinateTransformer)
+        val visibleFacesResolver = VisibleFacesResolver()
+
         viewModel = CubeViewModel(
             observeSettings = ObserveSettingsUseCase(fakeRepository),
             engineFactory = { _ -> fakeEngine },
             controllerFactory = { engine ->
-                CubeGameInteractor(engine, CubeInteractionProcessor(), PickingService(), { fakeTime }, NoOpCubeLogger())
+                CubeGameInteractor(
+                    engine,
+                    gestureClassifier,
+                    faceInteractionCalculator,
+                    visibleFacesResolver,
+                    PickingService(),
+                    { fakeTime },
+                    NoOpCubeLogger()
+                )
             },
         )
     }

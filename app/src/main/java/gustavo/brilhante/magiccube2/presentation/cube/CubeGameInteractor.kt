@@ -1,7 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
 import gustavo.brilhante.magiccube2.domain.TimeProvider
-import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
 import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
 import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
 import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
@@ -23,7 +22,6 @@ import kotlin.math.abs
 class CubeGameInteractor(
     private val engine: ICubeGameEngine,
     private val gestureClassifier: GestureClassifier,
-    private val coordinateTransformer: CoordinateTransformer,
     private val faceInteractionCalculator: FaceInteractionCalculator,
     private val visibleFacesResolver: VisibleFacesResolver,
     private val pickingService: PickingService,
@@ -89,7 +87,6 @@ class CubeGameInteractor(
 
         val normal = selectedFaceNormal ?: return emptyList()
         val screenDelta = Vector2(x - previousX, y - previousY)
-        val localDelta = coordinateTransformer.computeLocalDrag(screenDelta, angleRotateX, angleRotateY)
 
         val wasSliceNone = engine.rotation.activeSlice == ActiveSlice.NONE
         if (wasSliceNone) logDragStart(screenDelta.x, screenDelta.y, angleRotateX, angleRotateY)
