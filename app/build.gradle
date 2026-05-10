@@ -54,6 +54,8 @@ android {
         targetSdkVersion 35
         versionCode 6
         versionName "3.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         debug {
@@ -85,12 +87,13 @@ android {
     }
 
     testOptions {
+        animationsDisabled = true
         unitTests.all {
             useJUnitPlatform()
         }
 
         // Android instrumented tests configuration
-        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        // execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
 }
 
@@ -128,6 +131,8 @@ dependencies {
     // Testes
     testImplementation libs.junit
     testImplementation libs.junit.jupiter.api
+    testImplementation libs.koin.test
+    testImplementation libs.koin.test.junit4
     testRuntimeOnly libs.junit.jupiter.engine
     testRuntimeOnly libs.junit.platform.launcher
     testImplementation libs.kotlinx.coroutines.test
@@ -136,9 +141,11 @@ dependencies {
     androidTestImplementation platform(libs.compose.bom)
     androidTestImplementation libs.compose.ui.test.junit4
     androidTestImplementation libs.mockk.android
+    androidTestImplementation libs.koin.test
+    androidTestImplementation libs.koin.test.junit4
 
     // AndroidX Test Orchestrator for better test execution
-    androidTestUtil libs.androidx.test.orchestrator
+    // androidTestUtil libs.androidx.test.orchestrator
 
     // Debug tools
     debugImplementation libs.compose.ui.tooling

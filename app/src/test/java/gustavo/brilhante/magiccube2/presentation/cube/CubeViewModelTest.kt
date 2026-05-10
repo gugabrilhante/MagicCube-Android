@@ -1,10 +1,6 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
-import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
-import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
-import gustavo.brilhante.magiccube2.domain.cube.MovementType
-import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
+import gustavo.brilhante.magiccube2.domain.cube.*
 import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
 import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
@@ -41,9 +37,20 @@ class CubeViewModelTest {
 
         val matrixMath = MatrixMath()
         val gestureClassifier = GestureClassifier()
-        val coordinateTransformer = CoordinateTransformer()
-        val faceInteractionCalculator = FaceInteractionCalculator(coordinateTransformer, matrixMath)
-        val visibleFacesResolver = VisibleFacesResolver()
+        val rotationMath = CubeRotationMath()
+        val geometryResolver = CubeFaceGeometryResolver()
+        val sliceResolver = CubeSliceInteractionResolver(geometryResolver, rotationMath)
+        val visibilityCalculator = CubeVisibleFacesCalculator()
+        
+        val interactionProcessor = CubeInteractionProcessor(
+            gestureClassifier,
+            rotationMath,
+            geometryResolver,
+            sliceResolver,
+            visibilityCalculator,
+            matrixMath
+        )
+
         val renderEngine = CubeRenderEngine(
             rotationEngine = CubeRotationEngine(),
             projectionCalculator = CubeProjectionCalculator(matrixMath),
@@ -56,9 +63,7 @@ class CubeViewModelTest {
             controllerFactory = { engine ->
                 CubeGameInteractor(
                     engine,
-                    gestureClassifier,
-                    faceInteractionCalculator,
-                    visibleFacesResolver,
+                    interactionProcessor,
                     PickingService(matrixMath),
                     { fakeTime },
                     NoOpCubeLogger()
