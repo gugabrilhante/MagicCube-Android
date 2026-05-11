@@ -1,34 +1,42 @@
 name: Coverage
 
 on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
   workflow_run:
     workflows: ["Build", "Unit Tests", "UI Tests"]
     types:
       - completed
 
 concurrency:
-  group: coverage-${{ github.event.workflow_run.head_sha || github.sha }}
+  group: coverage-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
   cancel-in-progress: true
 
 jobs:
   coverage:
-    # Only run for master branch and when the triggering workflow succeeded.
-    # This prevents partial uploads by waiting for test workflows to complete.
+    # Trigger on push/PR, or on completion of other workflows on master.
     if: >
-      github.event.workflow_run.head_branch == 'master' &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event_name != 'workflow_run' || 
+      (github.event.workflow_run.head_branch == 'master' && github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
 
     steps:
       - name: Debug Info
         run: |
-          echo "GITHUB_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}"
-          echo "GITHUB_REF: ${{ github.event.workflow_run.head_branch || github.ref }}"
+          echo "Event Name: $GITHUB_EVENT_NAME"
+          echo "GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}"
+          echo "GITHUB_REF: $GITHUB_REF"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
+            echo "Triggering Workflow: ${{ github.event.workflow_run.name }}"
+            echo "Triggering Branch: ${{ github.event.workflow_run.head_branch }}"
+          fi
 
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
