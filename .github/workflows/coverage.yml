@@ -9,6 +9,7 @@ on:
 jobs:
   coverage:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -24,8 +25,22 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run coverage
-        run: ./gradlew clean testDebugUnitTest jacocoTestReport --stacktrace
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run all tests and generate coverage report
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: ./gradlew clean testDebugUnitTest connectedDebugAndroidTest jacocoTestReport --stacktrace
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

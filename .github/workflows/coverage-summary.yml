@@ -9,6 +9,7 @@ jobs:
   generate-summary:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout
@@ -21,8 +22,25 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Run unit tests and generate JaCoCo report
-        run: ./gradlew clean testDebugUnitTest jacocoTestReport --stacktrace
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run all tests and generate coverage report
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: aosp_atd
+          arch: x86_64
+          force-avd-creation: true
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -no-metrics
+          script: ./gradlew clean testDebugUnitTest connectedDebugAndroidTest jacocoTestReport --stacktrace
 
       - name: Validate JaCoCo report
         run: |
@@ -50,6 +68,10 @@ jobs:
 
           xml_path = 'app/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
           
+          if not os.path.exists(xml_path):
+              print("Error: JaCoCo XML report is missing!")
+              exit(1)
+
           tree = ET.parse(xml_path)
           root = tree.getroot()
           files_coverage = []
