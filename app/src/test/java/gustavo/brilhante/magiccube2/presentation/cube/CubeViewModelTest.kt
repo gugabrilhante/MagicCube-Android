@@ -1,7 +1,15 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.CoordinateTransformer
+import gustavo.brilhante.magiccube2.domain.cube.FaceInteractionCalculator
+import gustavo.brilhante.magiccube2.domain.cube.GestureClassifier
 import gustavo.brilhante.magiccube2.domain.cube.MovementType
+import gustavo.brilhante.magiccube2.domain.cube.VisibleFacesResolver
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
+import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.PickingService
 import gustavo.brilhante.magiccube2.grafic.RotationState
@@ -31,12 +39,32 @@ class CubeViewModelTest {
         fakeRepository = FakeSettingsRepository()
         fakeTime = 0L
 
+        val matrixMath = MatrixMath()
+        val gestureClassifier = GestureClassifier()
+        val coordinateTransformer = CoordinateTransformer()
+        val faceInteractionCalculator = FaceInteractionCalculator(coordinateTransformer, matrixMath)
+        val visibleFacesResolver = VisibleFacesResolver()
+        val renderEngine = CubeRenderEngine(
+            rotationEngine = CubeRotationEngine(),
+            projectionCalculator = CubeProjectionCalculator(matrixMath),
+            traversalEngine = CubeTraversalEngine(MatrixTracker(matrixMath), matrixMath)
+        )
+
         viewModel = CubeViewModel(
             observeSettings = ObserveSettingsUseCase(fakeRepository),
             engineFactory = { _ -> fakeEngine },
             controllerFactory = { engine ->
-                CubeGameInteractor(engine, CubeInteractionProcessor(), PickingService(), { fakeTime }, NoOpCubeLogger())
+                CubeGameInteractor(
+                    engine,
+                    gestureClassifier,
+                    faceInteractionCalculator,
+                    visibleFacesResolver,
+                    PickingService(matrixMath),
+                    { fakeTime },
+                    NoOpCubeLogger()
+                )
             },
+            renderEngine = renderEngine
         )
     }
 

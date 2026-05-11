@@ -29,10 +29,8 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         '**/*_Provide*Factory.class', '**/*Extensions*.*',
         '**/*_Impl*', '**/*_HiltModules*', '**/*ComposableSingletons*',
         '**/*Navigation*', '**/*Route*', '**/ui/theme/**', '**/*ColorKt*',
-        // Exclude OpenGL and UI components from coverage if they are hard to test
-        '**/gustavo/brilhante/magiccube2/grafic/**',
-        '**/gustavo/brilhante/magiccube2/compose/**',
-        '**/gustavo/brilhante/magiccube2/activity/**'
+        // We include grafic and compose to encourage testing where possible,
+        // but exclude purely generated/theme classes.
     ]
     def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
     def debugTreeAGP = fileTree(dir: "${buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: fileFilter)
@@ -88,7 +86,7 @@ android {
 
     testOptions {
         unitTests.all {
-            useJUnit()
+            useJUnitPlatform()
         }
 
         // Android instrumented tests configuration
@@ -129,6 +127,9 @@ dependencies {
 
     // Testes
     testImplementation libs.junit
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.platform.launcher
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.mockk
     testImplementation libs.turbine

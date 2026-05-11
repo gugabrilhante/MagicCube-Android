@@ -1,5 +1,6 @@
 package gustavo.brilhante.magiccube2.testutil
 
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import gustavo.brilhante.magiccube2.grafic.Cube
 import gustavo.brilhante.magiccube2.grafic.CubePosition
 import gustavo.brilhante.magiccube2.grafic.CubeSide
@@ -45,8 +46,8 @@ class FakeCubeGameEngine : ICubeGameEngine {
 
     override fun updateRotationFromDrag(
         cubelet: Cube,
-        normal: Triple<Float, Float, Float>,
-        dragVector: Triple<Float, Float, Float>,
+        normal: Vector3,
+        dragVector: Vector3,
     ) {
         updateRotationFromDragCallCount++
     }

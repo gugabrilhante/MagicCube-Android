@@ -1,5 +1,7 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import kotlin.math.abs
 import kotlin.random.Random
 
@@ -22,7 +24,10 @@ data class RotationState(
     val snapTarget: Float = 90f,
 )
 
-class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
+class CubeGameEngine(
+    shuffleCount: Int,
+    private val matrixMath: MatrixMath
+) : ICubeGameEngine {
 
     // --- Cube objects ---
     override val cubes: MutableList<Cube> = mutableListOf()
@@ -133,45 +138,46 @@ class CubeGameEngine(shuffleCount: Int) : ICubeGameEngine {
         }
     }
 
-    override fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>) {
+    override fun updateRotationFromDrag(cubelet: Cube, normal: Vector3, dragVector: Vector3) {
         if (rotation.isAnimating && rotation.activeSlice != ActiveSlice.NONE) return
 
         // 1. Find cubelet position in grid [x=col, z=height, y=depth]
         val cubeIdx = cubes.indexOf(cubelet)
-        var gridPos: Triple<Int, Int, Int>? = null
-        for (x in 0..2) for (z in 0..2) for (y in 0..2) {
-            if (cubeGrid[x][z][y] == cubeIdx) { gridPos = Triple(x, z, y); break }
+        var gridPosX: Int = -1
+        var gridPosZ: Int = -1
+        var gridPosY: Int = -1
+        outer@for (x in 0..2) for (z in 0..2) for (y in 0..2) {
+            if (cubeGrid[x][z][y] == cubeIdx) {
+                gridPosX = x; gridPosZ = z; gridPosY = y
+                break@outer
+            }
         }
-        val pos = gridPos ?: return
+        if (gridPosX == -1) return
 
         // 2. Project drag onto face plane: Dp = D - (D·N)*N
-        val dot = dragVector.first * normal.first +
-                  dragVector.second * normal.second +
-                  dragVector.third * normal.third
-        val dp = Triple(
-            dragVector.first  - dot * normal.first,
-            dragVector.second - dot * normal.second,
-            dragVector.third  - dot * normal.third,
+        val dot = dragVector.x * normal.x +
+                  dragVector.y * normal.y +
+                  dragVector.z * normal.z
+        val dp = Vector3(
+            dragVector.x  - dot * normal.x,
+            dragVector.y - dot * normal.y,
+            dragVector.z  - dot * normal.z,
         )
-        val dpLenSq = dp.first * dp.first + dp.second * dp.second + dp.third * dp.third
+        val dpLenSq = dp.x * dp.x + dp.y * dp.y + dp.z * dp.z
         if (dpLenSq < 1e-6f) return
 
         // 3. Rotation axis = N × Dp (all vectors in local cube space)
-        val axis = MatrixMath.normalize(MatrixMath.crossProduct(normal, dp))
+        val axis = matrixMath.normalize(matrixMath.crossProduct(normal, dp))
 
         // 4. Snap to dominant axis component and select layer from cubelet position.
-        //    Grid layout: cubeGrid[x][z][y] where z=height(top/bottom), y=depth(front/back).
-        //    local X → ROTATION_AXIS_X  (col index = pos.first)
-        //    local Y → ROTATION_AXIS_Z  (height index = pos.second, since grid Z = vertical axis)
-        //    local Z → ROTATION_AXIS_Y  (depth index = pos.third, since grid Y = depth axis)
-        val ax = abs(axis.first)
-        val ay = abs(axis.second)
-        val az = abs(axis.third)
+        val ax = abs(axis.x)
+        val ay = abs(axis.y)
+        val az = abs(axis.z)
 
         val targetSlice = when {
-            ax >= ay && ax >= az -> when (pos.first)  { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
-            ay >= ax && ay >= az -> when (pos.second) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
-            else                 -> when (pos.third)  { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
+            ax >= ay && ax >= az -> when (gridPosX)  { 0 -> ActiveSlice.ROTATION_AXIS_X_0; 1 -> ActiveSlice.ROTATION_AXIS_X_1; else -> ActiveSlice.ROTATION_AXIS_X_2 }
+            ay >= ax && ay >= az -> when (gridPosZ) { 0 -> ActiveSlice.ROTATION_AXIS_Z_0; 1 -> ActiveSlice.ROTATION_AXIS_Z_1; else -> ActiveSlice.ROTATION_AXIS_Z_2 }
+            else                 -> when (gridPosY)  { 0 -> ActiveSlice.ROTATION_AXIS_Y_0; 1 -> ActiveSlice.ROTATION_AXIS_Y_1; else -> ActiveSlice.ROTATION_AXIS_Y_2 }
         }
 
         rotation = rotation.copy(activeSlice = targetSlice, isAnimating = false)
