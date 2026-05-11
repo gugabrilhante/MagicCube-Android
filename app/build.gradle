@@ -28,18 +28,22 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         '**/*_Provide*Factory.class',
         '**/*_Impl*', '**/*_HiltModules*', '**/*ComposableSingletons*'
     ]
-    def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
-    def debugTreeAGP = fileTree(dir: "${buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: fileFilter)
-    def javaTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
-    def javaTreeAGP = fileTree(dir: "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
 
-    sourceDirectories.setFrom(files([mainSrc]))
-    classDirectories.setFrom(files([debugTree, debugTreeAGP, javaTree, javaTreeAGP]))
-    executionData.setFrom(fileTree(dir: "$buildDir", includes: [
-        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
-        "outputs/code_coverage/debugAndroidTest/connected/*coverage.ec"
+    def javaClasses = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+    def kotlinClasses = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
+    def agpKotlinClasses = fileTree(dir: "${buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: fileFilter)
+    
+    sourceDirectories.setFrom(files([
+        "${project.projectDir}/src/main/java",
+        "${project.projectDir}/src/main/kotlin"
     ]))
+    classDirectories.setFrom(files([javaClasses, kotlinClasses, agpKotlinClasses]))
+    executionData.setFrom(fileTree(dir: "$buildDir").include(
+        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+        "outputs/code_coverage/debugAndroidTest/connected/**/*.ec",
+        "jacoco/testDebugUnitTest.exec",
+        "outputs/unit_test_code_coverage/debug/testDebugUnitTest.exec"
+    ))
 }
 
 android {
@@ -92,7 +96,7 @@ android {
         }
 
         // Android instrumented tests configuration
-        // execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
     }
 }
 
@@ -133,6 +137,7 @@ dependencies {
     testImplementation libs.koin.test
     testImplementation libs.koin.test.junit4
     testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.vintage.engine
     testRuntimeOnly libs.junit.platform.launcher
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.mockk
@@ -144,7 +149,7 @@ dependencies {
     androidTestImplementation libs.koin.test.junit4
 
     // AndroidX Test Orchestrator for better test execution
-    // androidTestUtil libs.androidx.test.orchestrator
+    androidTestUtil libs.androidx.test.orchestrator
 
     // Debug tools
     debugImplementation libs.compose.ui.tooling

@@ -1,8 +1,6 @@
 # Magic Cube Android
 
-[![Build](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/build.yml)
-[![Unit Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/unit_test.yml)
-[![UI Tests](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ui_test.yml)
+[![CI](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/gugabrilhante/MagicCube-Android/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/gugabrilhante/MagicCube-Android/branch/master/graph/badge.svg)](https://codecov.io/gh/gugabrilhante/MagicCube-Android)
 
 An interactive 3D Rubik's Cube simulator for Android, built with Clean Architecture + MVVM with MVI-like unidirectional data flow, Jetpack Compose, Koin, Navigation3, and OpenGL ES 3.0.
