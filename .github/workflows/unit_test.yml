@@ -27,6 +27,12 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
+      - name: Upload unit test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-coverage
+          path: app/build/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec
+
       - name: Upload test report
         uses: actions/upload-artifact@v4
         if: always()

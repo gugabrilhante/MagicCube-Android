@@ -1,6 +1,10 @@
 name: Coverage
 
 on:
+  workflow_run:
+    workflows: ["Build", "Unit Tests", "UI Tests"]
+    types:
+      - completed
   push:
     branches: [ master ]
   pull_request:
@@ -8,6 +12,8 @@ on:
 
 jobs:
   coverage:
+    # Only run if the triggering workflows were successful (if triggered by workflow_run)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -24,7 +30,8 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Run coverage
+      - name: Generate Coverage Report
+        # This generates the unit test data and aggregates any available UI test data
         run: ./gradlew clean testDebugUnitTest jacocoTestReport --stacktrace
 
       - name: Upload coverage to Codecov

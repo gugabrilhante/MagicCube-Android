@@ -26,21 +26,21 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
         '**/*$ViewInjector*.*', '**/*$ViewBinder*.*', '**/Lambda$*.class',
         '**/Lambda.class', '**/*Lambda.class', '**/*Lambda$*.class',
         '**/*_MembersInjector.class', '**/Dagger*.*', '**/*_Factory.class',
-        '**/*_Provide*Factory.class', '**/*Extensions*.*',
+        '**/*_Provide*Factory.class',
         '**/*_Impl*', '**/*_HiltModules*', '**/*ComposableSingletons*',
-        '**/*Navigation*', '**/*Route*', '**/ui/theme/**', '**/*ColorKt*',
-        // We include grafic and compose to encourage testing where possible,
-        // but exclude purely generated/theme classes.
+        '**/ui/theme/**',
     ]
+    def buildDir = layout.buildDirectory.get().asFile
     def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
-    def debugTreeAGP = fileTree(dir: "${buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: fileFilter)
+    def kotlinTree = fileTree(dir: "${buildDir}/intermediates/kotlin_classes/debug/classes", excludes: fileFilter)
     def javaTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.setFrom(files([mainSrc]))
-    classDirectories.setFrom(files([debugTree, debugTreeAGP, javaTree]))
+    classDirectories.setFrom(files([debugTree, kotlinTree, javaTree]))
     executionData.setFrom(fileTree(dir: "$buildDir", includes: [
-        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
+        "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec",
+        "outputs/code_coverage/debugAndroidTest/connected/*/*.ec"
     ]))
 }
 

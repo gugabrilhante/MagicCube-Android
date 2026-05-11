@@ -41,3 +41,9 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -no-metrics
           script: ./gradlew connectedDebugAndroidTest --no-daemon
+
+      - name: Upload UI test coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-coverage
+          path: app/build/outputs/code_coverage/debugAndroidTest/connected/**/*.ec
