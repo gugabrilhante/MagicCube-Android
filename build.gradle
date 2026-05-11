@@ -3,3 +3,58 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
 }
+
+def jacocoExclusions = [
+    '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*',
+    'android/**/*.*', '**/Hilt_*', '**/*_HiltModules*', '**/*_Factory*',
+    '**/*_MembersInjector*', '**/DaggerHilt*', '**/*_Impl*', '**/ComposableSingletons*',
+    '**/*Preview*', '**/*Theme*', '**/*ColorKt*', '**/*TypographyKt*', '**/*TypeKt*',
+    '**/*ShapeKt*', '**/*Navigation*', '**/*Route*'
+]
+
+subprojects {
+    def configureJacoco = {
+        apply plugin: 'jacoco'
+        jacoco { toolVersion = '0.8.12' }
+        tasks.withType(Test).configureEach {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = jacocoExclusions + ['jdk/internal/reflect/**', 'sun/reflect/**']
+            }
+            maxHeapSize = "1024m"
+            forkEvery = 10
+            jvmArgs(
+                "-XX:+EnableDynamicAgentLoading", "-Djdk.attach.allowAttachSelf=true",
+                "-Dobjenesis.ignore.jdk.type.check=true", "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+                "--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/java.net=ALL-UNNAMED",
+                "--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED", "--add-exports=java.base/jdk.internal.reflect=ALL-UNNAMED",
+                "--add-opens=java.base/sun.reflect.annotation=ALL-UNNAMED"
+            )
+        }
+    }
+    plugins.withId('com.android.library') { configureJacoco() }
+    plugins.withId('com.android.application') { configureJacoco() }
+}
+
+apply plugin: 'jacoco'
+
+task jacocoTestReport(type: JacocoReport, group: 'verification') {
+    dependsOn subprojects.collect { it.tasks.matching { it.name == 'testDebugUnitTest' } }
+    reports {
+        xml.required = true
+        xml.outputLocation.set(file("$buildDir/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
+    }
+    def classDirs = subprojects.collect { proj ->
+        def asmDir = file("${proj.buildDir}/intermediates/classes/debug/transformDebugClassesWithAsm/dirs")
+        asmDir.exists() ? fileTree(dir: asmDir, excludes: jacocoExclusions) :
+        fileTree(dir: "${proj.buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: jacocoExclusions) +
+        fileTree(dir: "${proj.buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: jacocoExclusions)
+    }
+    classDirectories.setFrom(files(classDirs))
+    sourceDirectories.setFrom(files(subprojects.collect { proj -> ["src/main/java", "src/main/kotlin"].collect { file("${proj.projectDir}/${it}") } }.flatten()))
+    executionData.setFrom(fileTree(rootDir) {
+        include '**/jacoco/*.exec', '**/outputs/unit_test_code_coverage/**/*.exec'
+        include '**/outputs/code_coverage/**/*.ec', '**/code_coverage/**/*.ec'
+    })
+}
