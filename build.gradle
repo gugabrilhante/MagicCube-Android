@@ -5,11 +5,12 @@ plugins {
 }
 
 def jacocoExclusions = [
-    '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*',
+    '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*',
+    '**/*Test.class', '**/*Test$*.class',
     'android/**/*.*', '**/Hilt_*', '**/*_HiltModules*', '**/*_Factory*',
     '**/*_MembersInjector*', '**/DaggerHilt*', '**/*_Impl*', '**/ComposableSingletons*',
     '**/*Preview*', '**/*Theme*', '**/*ColorKt*', '**/*TypographyKt*', '**/*TypeKt*',
-    '**/*ShapeKt*', '**/*Navigation*', '**/*Route*'
+    '**/*ShapeKt*'
 ]
 
 subprojects {
@@ -39,20 +40,35 @@ subprojects {
 
 apply plugin: 'jacoco'
 
-task jacocoTestReport(type: JacocoReport, group: 'verification') {
+tasks.register('jacocoTestReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates an aggregate report from all subprojects'
+
     dependsOn subprojects.collect { it.tasks.matching { it.name == 'testDebugUnitTest' } }
+
     reports {
         xml.required = true
-        xml.outputLocation.set(file("$buildDir/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
+        html.required = true
+        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
     }
-    def classDirs = subprojects.collect { proj ->
-        def asmDir = file("${proj.buildDir}/intermediates/classes/debug/transformDebugClassesWithAsm/dirs")
-        asmDir.exists() ? fileTree(dir: asmDir, excludes: jacocoExclusions) :
-        fileTree(dir: "${proj.buildDir}/intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes", excludes: jacocoExclusions) +
-        fileTree(dir: "${proj.buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes", excludes: jacocoExclusions)
-    }
-    classDirectories.setFrom(files(classDirs))
-    sourceDirectories.setFrom(files(subprojects.collect { proj -> ["src/main/java", "src/main/kotlin"].collect { file("${proj.projectDir}/${it}") } }.flatten()))
+
+    classDirectories.setFrom(files(subprojects.collect { proj ->
+        def bDir = proj.layout.buildDirectory
+        [
+            "intermediates/classes/debug/transformDebugClassesWithAsm/dirs",
+            "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
+            "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+            "tmp/kotlin-classes/debug",
+            "intermediates/kotlin-classes/debug"
+        ].collect { path ->
+            fileTree(dir: bDir.dir(path), excludes: jacocoExclusions)
+        }
+    }))
+
+    sourceDirectories.setFrom(files(subprojects.collect { proj ->
+        ["src/main/java", "src/main/kotlin"].collect { proj.file(it) }
+    }))
+
     executionData.setFrom(fileTree(rootDir) {
         include '**/jacoco/*.exec', '**/outputs/unit_test_code_coverage/**/*.exec'
         include '**/outputs/code_coverage/**/*.ec', '**/code_coverage/**/*.ec'
