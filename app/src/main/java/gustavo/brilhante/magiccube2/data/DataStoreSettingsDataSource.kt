@@ -5,8 +5,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import gustavo.brilhante.magiccube2.data.mapper.SettingsMapper
 import gustavo.brilhante.magiccube2.domain.CubeSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
@@ -20,14 +20,6 @@ class DataStoreSettingsDataSource(
     private val dataStore: DataStore<Preferences> = context.dataStore
 ) : SettingsLocalDataSource {
 
-    private object Keys {
-        val SHUFFLE = intPreferencesKey("shuffle")
-        val SPEED = intPreferencesKey("speed")
-        val SIZE = intPreferencesKey("size")
-    }
-
-    private val defaults = CubeSettings()
-
     override val settingsFlow: Flow<CubeSettings> = dataStore.data
         .catch { e ->
             if (e is IOException) {
@@ -36,19 +28,11 @@ class DataStoreSettingsDataSource(
                 throw e
             }
         }
-        .map { prefs ->
-            CubeSettings(
-                shuffle = prefs[Keys.SHUFFLE] ?: defaults.shuffle,
-                speed = prefs[Keys.SPEED] ?: defaults.speed,
-                size = prefs[Keys.SIZE] ?: defaults.size
-            )
-        }
+        .map { prefs -> SettingsMapper.mapToDomain(prefs) }
 
     override suspend fun save(settings: CubeSettings) {
         dataStore.edit { prefs ->
-            prefs[Keys.SHUFFLE] = settings.shuffle
-            prefs[Keys.SPEED] = settings.speed
-            prefs[Keys.SIZE] = settings.size
+            SettingsMapper.mapToPreferences(prefs, settings)
         }
     }
 }

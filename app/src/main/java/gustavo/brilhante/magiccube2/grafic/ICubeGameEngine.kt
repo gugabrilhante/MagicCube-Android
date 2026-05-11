@@ -1,5 +1,7 @@
 package gustavo.brilhante.magiccube2.grafic
 
+import gustavo.brilhante.magiccube2.domain.model.Vector3
+
 /**
  * Abstraction over the cube game engine.
  * Allows mocking in unit tests of [gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel].
@@ -16,7 +18,7 @@ interface ICubeGameEngine {
     fun rotateClosestSideToScreen(rotationSense: Int = 1)
 
     /** Updates the rotation of a slice based on a drag gesture. */
-    fun updateRotationFromDrag(cubelet: Cube, normal: Triple<Float, Float, Float>, dragVector: Triple<Float, Float, Float>)
+    fun updateRotationFromDrag(cubelet: Cube, normal: Vector3, dragVector: Vector3)
 
     /** Corrects the angle sign at the start of each frame. Called before rendering. */
     fun prepareFrameRotation()

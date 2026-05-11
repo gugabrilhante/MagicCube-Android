@@ -19,11 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import gustavo.brilhante.magiccube2.R
 import gustavo.brilhante.magiccube2.presentation.MainMenuUiEvent
 import gustavo.brilhante.magiccube2.presentation.MainMenuViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -36,6 +38,13 @@ fun MainMenuScreen(
 ) {
     val cubeColors by viewModel.cubeColors.collectAsState()
     val cubeTransition = LocalCubeTransition.current
+
+    LifecycleResumeEffect(Unit) {
+        viewModel.setShuffling(true)
+        onPauseOrDispose {
+            viewModel.setShuffling(false)
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.uiEvent.collect { event ->
@@ -102,15 +111,18 @@ fun MainMenuScreen(
             ) {
                 MagicCubeButton(
                     text = stringResource(id = R.string.start),
-                    onClick = viewModel::onStartClick
+                    onClick = viewModel::onStartClick,
+                    modifier = Modifier.testTag("start_button")
                 )
                 MagicCubeButton(
                     text = stringResource(id = R.string.options),
-                    onClick = viewModel::onOptionsClick
+                    onClick = viewModel::onOptionsClick,
+                    modifier = Modifier.testTag("options_button")
                 )
                 MagicCubeButton(
                     text = stringResource(id = R.string.quit),
-                    onClick = onQuitClick
+                    onClick = onQuitClick,
+                    modifier = Modifier.testTag("quit_button")
                 )
             }
         }

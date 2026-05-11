@@ -1,7 +1,13 @@
 package gustavo.brilhante.magiccube2.presentation.cube
 
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
-import gustavo.brilhante.magiccube2.domain.cube.MovementType
+import gustavo.brilhante.magiccube2.domain.cube.*
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeDrawCommandFactory
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeSliceResolver
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
+import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.PickingService
 import gustavo.brilhante.magiccube2.grafic.RotationState
@@ -31,12 +37,45 @@ class CubeViewModelTest {
         fakeRepository = FakeSettingsRepository()
         fakeTime = 0L
 
+        val matrixMath = MatrixMath()
+        val gestureClassifier = GestureClassifier()
+        val rotationMath = CubeRotationMath()
+        val geometryResolver = CubeFaceGeometryResolver()
+        val sliceResolver = CubeSliceInteractionResolver(geometryResolver, rotationMath)
+        val visibilityCalculator = CubeVisibleFacesCalculator()
+        
+        val interactionProcessor = CubeInteractionProcessor(
+            gestureClassifier,
+            rotationMath,
+            geometryResolver,
+            sliceResolver,
+            visibilityCalculator,
+            matrixMath
+        )
+
+        val renderEngine = CubeRenderEngine(
+            rotationEngine = CubeRotationEngine(),
+            projectionCalculator = CubeProjectionCalculator(matrixMath),
+            traversalEngine = CubeTraversalEngine(
+                MatrixTracker(matrixMath),
+                CubeSliceResolver(),
+                CubeDrawCommandFactory(matrixMath)
+            )
+        )
+
         viewModel = CubeViewModel(
             observeSettings = ObserveSettingsUseCase(fakeRepository),
             engineFactory = { _ -> fakeEngine },
             controllerFactory = { engine ->
-                CubeGameInteractor(engine, CubeInteractionProcessor(), PickingService(), { fakeTime }, NoOpCubeLogger())
+                CubeGameInteractor(
+                    engine,
+                    interactionProcessor,
+                    PickingService(matrixMath),
+                    { fakeTime },
+                    NoOpCubeLogger()
+                )
             },
+            renderEngine = renderEngine
         )
     }
 

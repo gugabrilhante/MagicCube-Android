@@ -5,20 +5,30 @@ import gustavo.brilhante.magiccube2.data.DataStoreSettingsDataSource
 import gustavo.brilhante.magiccube2.data.SettingsLocalDataSource
 import gustavo.brilhante.magiccube2.data.SettingsRepositoryImpl
 import gustavo.brilhante.magiccube2.domain.TimeProvider
-import gustavo.brilhante.magiccube2.domain.cube.CubeInteractionProcessor
+import gustavo.brilhante.magiccube2.domain.cube.*
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
 import gustavo.brilhante.magiccube2.domain.repository.SettingsRepository
 import gustavo.brilhante.magiccube2.domain.usecase.ObserveSettingsUseCase
 import gustavo.brilhante.magiccube2.domain.usecase.SaveSettingsUseCase
 import gustavo.brilhante.magiccube2.grafic.CubeGameEngine
 import gustavo.brilhante.magiccube2.grafic.CubeGameEngineFactory
+import gustavo.brilhante.magiccube2.grafic.MatrixTracker
 import gustavo.brilhante.magiccube2.grafic.PickingService
 import gustavo.brilhante.magiccube2.presentation.MainMenuViewModel
 import gustavo.brilhante.magiccube2.presentation.cube.AndroidCubeLogger
 import gustavo.brilhante.magiccube2.presentation.cube.CubeControllerFactory
 import gustavo.brilhante.magiccube2.presentation.cube.CubeGameInteractor
+import gustavo.brilhante.magiccube2.presentation.cube.CubeRenderEngine
 import gustavo.brilhante.magiccube2.presentation.cube.CubeViewModel
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeDrawCommandFactory
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeSliceResolver
+import gustavo.brilhante.magiccube2.presentation.cube.engine.CubeTraversalEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeProjectionCalculator
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeRotationEngine
+import gustavo.brilhante.magiccube2.presentation.cube.engine.ICubeTraversalEngine
 import gustavo.brilhante.magiccube2.presentation.options.OptionsViewModel
-import gustavo.brilhante.magiccube2.domain.cube.CubeLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,22 +49,53 @@ val appModule = module {
     // Domain — use cases
     singleOf(::SaveSettingsUseCase)
     singleOf(::ObserveSettingsUseCase)
+    single { MatrixMath() }
 
     // Engine factory — creates ICubeGameEngine instances
-    single<CubeGameEngineFactory> { CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount) } }
+    single<CubeGameEngineFactory> {
+        val matrixMath = get<MatrixMath>()
+        CubeGameEngineFactory { shuffleCount -> CubeGameEngine(shuffleCount, matrixMath) }
+    }
 
     // System utilities
     single<TimeProvider> { TimeProvider { SystemClock.elapsedRealtime() } }
 
     // Interaction services — stateless, safe as singletons
-    singleOf(::CubeInteractionProcessor)
-    singleOf(::PickingService)
+    single { GestureClassifier() }
+    single<RotationMath> { CubeRotationMath() }
+    single<FaceGeometryResolver> { CubeFaceGeometryResolver() }
+    single<SliceInteractionResolver> { CubeSliceInteractionResolver(get(), get()) }
+    single<VisibleFacesCalculator> { CubeVisibleFacesCalculator() }
+    single { 
+        CubeInteractionProcessor(
+            gestureClassifier = get(),
+            rotationMath = get(),
+            geometryResolver = get(),
+            sliceResolver = get(),
+            visibilityCalculator = get(),
+            matrixMath = get()
+        )
+    }
+    single { PickingService(get()) }
+
+    single<ICubeRotationEngine> { CubeRotationEngine() }
+    single<ICubeProjectionCalculator> { CubeProjectionCalculator(get()) }
+    single { CubeSliceResolver() }
+    single { CubeDrawCommandFactory(get()) }
+    single<ICubeTraversalEngine> { CubeTraversalEngine(MatrixTracker(get()), get(), get()) }
+    single { CubeRenderEngine(get(), get(), get()) }
     single<CubeLogger> { AndroidCubeLogger() }
 
     // Controller factory — wires domain services into a fresh controller per engine instance
     single<CubeControllerFactory> {
         CubeControllerFactory { engine ->
-            CubeGameInteractor(engine, get(), get(), get(), get())
+            CubeGameInteractor(
+                engine = engine,
+                interactionProcessor = get(),
+                pickingService = get(),
+                timeProvider = get(),
+                logger = get()
+            )
         }
     }
 

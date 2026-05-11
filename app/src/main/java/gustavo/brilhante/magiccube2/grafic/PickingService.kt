@@ -1,17 +1,18 @@
 package gustavo.brilhante.magiccube2.grafic
 
-import android.opengl.Matrix
+import gustavo.brilhante.magiccube2.domain.math.MatrixMath
+import gustavo.brilhante.magiccube2.domain.model.Vector3
 import gustavo.brilhante.magiccube2.presentation.cube.CubeDrawCommand
 import kotlin.math.abs
 
 /**
  * Service responsible for detecting which cubelet was touched using ray casting.
  */
-class PickingService {
+class PickingService(private val matrixMath: MatrixMath) {
 
     data class PickingResult(
         val cubelet: Cube,
-        val faceNormal: Triple<Float, Float, Float>
+        val faceNormal: Vector3
     )
 
     /**
@@ -35,7 +36,7 @@ class PickingService {
             // We need to transform the ray from NDC to the local space of each cubelet.
             // Each cubelet has its own MVP matrix.
             val invertedMvp = FloatArray(16)
-            if (!Matrix.invertM(invertedMvp, 0, command.mvpMatrix, 0)) continue
+            if (!matrixMath.invertM(invertedMvp, 0, command.mvpMatrix, 0)) continue
 
             // A ray in NDC goes from Z=-1 (near plane) to Z=1 (far plane)
             val nearPointNDC = floatArrayOf(xNdc, yNdc, -1f, 1f)
@@ -66,7 +67,7 @@ class PickingService {
 
     private fun transformPoint(matrix: FloatArray, point: FloatArray): FloatArray {
         val result = FloatArray(4)
-        Matrix.multiplyMV(result, 0, matrix, 0, point, 0)
+        matrixMath.multiplyMV(result, 0, matrix, 0, point, 0)
         // Perspective divide
         return floatArrayOf(result[0] / result[3], result[1] / result[3], result[2] / result[3])
     }
@@ -75,10 +76,10 @@ class PickingService {
      * Ray-AABB (Axis-Aligned Bounding Box) intersection test for a unit cube (-1 to 1).
      * Returns the distance (t) and the normal of the hit face.
      */
-    private fun intersectAABB(origin: FloatArray, dir: FloatArray): Pair<Float, Triple<Float, Float, Float>>? {
+    private fun intersectAABB(origin: FloatArray, dir: FloatArray): Pair<Float, Vector3>? {
         var tMin = -Float.MAX_VALUE
         var tMax = Float.MAX_VALUE
-        var hitNormal = Triple(0f, 0f, 0f)
+        var hitNormal = Vector3.Zero
 
         for (i in 0..2) {
             if (abs(dir[i]) < 1e-6) {
@@ -99,9 +100,9 @@ class PickingService {
                 if (t1 > tMin) {
                     tMin = t1
                     hitNormal = when (i) {
-                        0 -> Triple(n1, 0f, 0f)
-                        1 -> Triple(0f, n1, 0f)
-                        else -> Triple(0f, 0f, n1)
+                        0 -> Vector3(n1, 0f, 0f)
+                        1 -> Vector3(0f, n1, 0f)
+                        else -> Vector3(0f, 0f, n1)
                     }
                 }
                 tMax = minOf(tMax, t2)

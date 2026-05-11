@@ -23,13 +23,23 @@ class MainMenuViewModel : ViewModel() {
     private val _cubeColors = MutableStateFlow(CUBE_FACE_COLORS.shuffled())
     val cubeColors: StateFlow<List<Long>> = _cubeColors.asStateFlow()
 
+    private val _isShuffling = MutableStateFlow(false)
+
     init {
         viewModelScope.launch {
             while (true) {
-                delay(SHUFFLE_INTERVAL_MS)
-                _cubeColors.value = CUBE_FACE_COLORS.shuffled()
+                if (_isShuffling.value) {
+                    delay(SHUFFLE_INTERVAL_MS)
+                    _cubeColors.value = CUBE_FACE_COLORS.shuffled()
+                } else {
+                    delay(100) // Small delay to avoid tight loop when not shuffling
+                }
             }
         }
+    }
+
+    fun setShuffling(enabled: Boolean) {
+        _isShuffling.value = enabled
     }
 
     fun onStartClick() {

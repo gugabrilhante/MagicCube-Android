@@ -26,6 +26,7 @@ class CubeViewModel(
     observeSettings: ObserveSettingsUseCase,
     private val engineFactory: CubeGameEngineFactory,
     private val controllerFactory: CubeControllerFactory,
+    private val renderEngine: CubeRenderEngine
 ) : ViewModel() {
 
     private val _settingsState = MutableStateFlow<CubeSettings?>(null)
@@ -38,7 +39,6 @@ class CubeViewModel(
     val engine: ICubeGameEngine
         get() = _engine ?: throw IllegalStateException("Engine not initialized. Wait for settingsState to be non-null.")
 
-    private val renderEngine = CubeRenderEngine()
     private var _interactor: ICubeInteractor? = null
     private val interactor: ICubeInteractor
         get() = _interactor ?: throw IllegalStateException("Interactor not initialized. Wait for settingsState to be non-null.")
