@@ -8,32 +8,24 @@ class GestureClassifierTest {
     private val classifier = GestureClassifier()
 
     @Test
-    fun `given short time and large horizontal delta when classifyMovement then returns SWIPE_RIGHT`() {
-        val result = classifier.classifyMovement(100L, 150f, 10f)
-        assertEquals(MovementType.SWIPE_RIGHT, result)
+    fun `given short time and small displacement when classify then returns NONE`() {
+        assertEquals(MovementType.NONE, classifier.classifyMovement(100L, 50f, 50f))
     }
 
     @Test
-    fun `given short time and large negative horizontal delta when classifyMovement then returns SWIPE_LEFT`() {
-        val result = classifier.classifyMovement(100L, -150f, 10f)
-        assertEquals(MovementType.SWIPE_LEFT, result)
+    fun `given short time and large horizontal displacement when classify then returns SWIPE`() {
+        assertEquals(MovementType.SWIPE_RIGHT, classifier.classifyMovement(100L, 150f, 20f))
+        assertEquals(MovementType.SWIPE_LEFT, classifier.classifyMovement(100L, -150f, 20f))
     }
 
     @Test
-    fun `given short time and large vertical delta when classifyMovement then returns SWIPE_DOWN`() {
-        val result = classifier.classifyMovement(100L, 10f, 150f)
-        assertEquals(MovementType.SWIPE_DOWN, result)
+    fun `given short time and large vertical displacement when classify then returns SWIPE`() {
+        assertEquals(MovementType.SWIPE_DOWN, classifier.classifyMovement(100L, 20f, 150f))
+        assertEquals(MovementType.SWIPE_UP, classifier.classifyMovement(100L, 20f, -150f))
     }
 
     @Test
-    fun `given short time and large negative vertical delta when classifyMovement then returns SWIPE_UP`() {
-        val result = classifier.classifyMovement(100L, 10f, -150f)
-        assertEquals(MovementType.SWIPE_UP, result)
-    }
-
-    @Test
-    fun `given long time when classifyMovement then returns DRAG`() {
-        val result = classifier.classifyMovement(300L, 10f, 10f)
-        assertEquals(MovementType.DRAG, result)
+    fun `given long time when classify then returns DRAG`() {
+        assertEquals(MovementType.DRAG, classifier.classifyMovement(300L, 50f, 50f))
     }
 }

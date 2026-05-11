@@ -2,6 +2,7 @@ package gustavo.brilhante.magiccube2.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -22,35 +23,35 @@ class AppNavigationTest {
     @Test
     fun givenMainMenuWhenOptionsClickedThenOptionsScreenIsDisplayed() {
         // Given - Main Menu is displayed
-        composeRule.onNodeWithText("Options", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("options_button").assertIsDisplayed()
 
         // When
-        composeRule.onNodeWithText("Options", ignoreCase = true).performClick()
+        composeRule.onNodeWithTag("options_button").performClick()
         waitForOptionsScreen()
 
         // Then
-        composeRule.onNodeWithText("Shuffle", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("slider_Shuffle").assertIsDisplayed()
     }
 
     @Test
     fun givenOptionsScreenWhenBackClickedThenMainMenuIsDisplayed() {
         // Given - In Options Screen
-        composeRule.onNodeWithText("Options", ignoreCase = true).performClick()
+        composeRule.onNodeWithTag("options_button").performClick()
         waitForOptionsScreen()
-        composeRule.onNodeWithText("Shuffle", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("slider_Shuffle").assertIsDisplayed()
 
         // When - Click back
         composeRule.onNodeWithContentDescription("Back", ignoreCase = true).performClick()
         composeRule.waitForIdle()
 
         // Then
-        composeRule.onNodeWithText("Start", ignoreCase = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("start_button").assertIsDisplayed()
     }
 
     @Test
     fun givenOptionsScreenWhenShuffleChangedThenUIUpdates() {
         // Given
-        composeRule.onNodeWithText("Options", ignoreCase = true).performClick()
+        composeRule.onNodeWithTag("options_button").performClick()
         waitForOptionsScreen()
 
         // When
@@ -69,7 +70,7 @@ class AppNavigationTest {
     // then wait for any remaining animations to settle.
     private fun waitForOptionsScreen() {
         composeRule.waitUntil(timeoutMillis = 5000) {
-            composeRule.onAllNodesWithText("Shuffle", ignoreCase = true)
+            composeRule.onAllNodesWithTag("slider_Shuffle")
                 .fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.waitForIdle()
