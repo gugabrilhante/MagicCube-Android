@@ -54,23 +54,30 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
     classDirectories.setFrom(files({
         subprojects.collect { proj ->
-            def bDir = proj.layout.buildDirectory
-            [
-                "intermediates/classes/debug/transformDebugClassesWithAsm/dirs",
-                "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
-                "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
-                "tmp/kotlin-classes/debug",
-                "intermediates/kotlin-classes/debug"
-            ].collect { path ->
-                fileTree(dir: bDir.dir(path), excludes: jacocoExclusions)
+            def buildDir = proj.layout.buildDirectory.asFile.get()
+            def asmDir = new File(buildDir, "intermediates/classes/debug/transformDebugClassesWithAsm/dirs")
+
+            // Prioritize instrumented classes (ASM) to match execution data IDs
+            if (asmDir.exists()) {
+                fileTree(dir: asmDir, excludes: jacocoExclusions)
+            } else {
+                [
+                    "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
+                    "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+                    "tmp/kotlin-classes/debug",
+                    "intermediates/kotlin-classes/debug"
+                ].collect { path ->
+                    def dir = new File(buildDir, path)
+                    dir.exists() ? fileTree(dir: dir, excludes: jacocoExclusions) : null
+                }.findAll { it != null }
             }
-        }
+        }.flatten()
     }))
 
     sourceDirectories.setFrom(files({
         subprojects.collect { proj ->
             ["src/main/java", "src/main/kotlin"].collect { proj.file(it) }
-        }
+        }.flatten()
     }))
 
     executionData.setFrom(fileTree(rootDir) {

@@ -49,9 +49,8 @@ jobs:
         run: chmod +x gradlew
 
       - name: Generate Coverage Report
-        # This generates the unit test data and aggregates any available UI test data.
-        # It runs clean to ensure a fresh report, which is safe because it runs its own tests.
-        run: ./gradlew clean testDebugUnitTest jacocoTestReport --stacktrace
+        # --rerun-tasks ensures the report is recalculated with the new .exec files
+        run: ./gradlew clean testDebugUnitTest jacocoTestReport --rerun-tasks --stacktrace
 
       - name: Pre-upload Validation
         run: |
@@ -67,7 +66,7 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
