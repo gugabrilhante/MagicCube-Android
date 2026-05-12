@@ -44,7 +44,7 @@ tasks.register('jacocoTestReport', JacocoReport) {
     group = 'verification'
     description = 'Generates an aggregate report from all subprojects'
 
-    dependsOn subprojects.collect { it.tasks.matching { it.name == 'testDebugUnitTest' } }
+    dependsOn { subprojects.collect { it.tasks.matching { it.name == 'testDebugUnitTest' } } }
 
     reports {
         xml.required = true
@@ -52,21 +52,25 @@ tasks.register('jacocoTestReport', JacocoReport) {
         xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
     }
 
-    classDirectories.setFrom(files(subprojects.collect { proj ->
-        def bDir = proj.layout.buildDirectory
-        [
-            "intermediates/classes/debug/transformDebugClassesWithAsm/dirs",
-            "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
-            "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
-            "tmp/kotlin-classes/debug",
-            "intermediates/kotlin-classes/debug"
-        ].collect { path ->
-            fileTree(dir: bDir.dir(path), excludes: jacocoExclusions)
+    classDirectories.setFrom(files({
+        subprojects.collect { proj ->
+            def bDir = proj.layout.buildDirectory
+            [
+                "intermediates/classes/debug/transformDebugClassesWithAsm/dirs",
+                "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
+                "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+                "tmp/kotlin-classes/debug",
+                "intermediates/kotlin-classes/debug"
+            ].collect { path ->
+                fileTree(dir: bDir.dir(path), excludes: jacocoExclusions)
+            }
         }
     }))
 
-    sourceDirectories.setFrom(files(subprojects.collect { proj ->
-        ["src/main/java", "src/main/kotlin"].collect { proj.file(it) }
+    sourceDirectories.setFrom(files({
+        subprojects.collect { proj ->
+            ["src/main/java", "src/main/kotlin"].collect { proj.file(it) }
+        }
     }))
 
     executionData.setFrom(fileTree(rootDir) {

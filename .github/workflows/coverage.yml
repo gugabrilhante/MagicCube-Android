@@ -63,6 +63,7 @@ jobs:
           else
             echo "Report NOT found at expected path!"
             ls -R build/reports
+            exit 1
           fi
 
       - name: Upload coverage to Codecov
