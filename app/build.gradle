@@ -94,6 +94,7 @@ dependencies {
     testImplementation libs.koin.test
     testImplementation libs.koin.test.junit4
     testRuntimeOnly libs.junit.jupiter.engine
+    testRuntimeOnly libs.junit.vintage.engine
     testRuntimeOnly libs.junit.platform.launcher
     testImplementation libs.kotlinx.coroutines.test
     testImplementation libs.mockk
