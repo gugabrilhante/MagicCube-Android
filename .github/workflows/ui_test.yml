@@ -47,3 +47,4 @@ jobs:
         with:
           name: ui-test-coverage
           path: app/build/outputs/code_coverage/debugAndroidTest/connected/**/*.ec
+          if-no-files-found: warn

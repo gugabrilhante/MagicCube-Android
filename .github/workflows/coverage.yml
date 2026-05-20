@@ -31,6 +31,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # Download UI test .ec files before running jacocoTestReport so they are
+      # included in executionData. Files are restored to their original paths
+      # (app/build/outputs/code_coverage/...) which matches the pattern in build.gradle.
       - name: Download UI test coverage
         uses: actions/download-artifact@v4
         with:
@@ -39,48 +42,28 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: '.'
 
-      - name: Find unit test run ID and PR number
-        id: meta
+      - name: Get PR number
+        id: pr-info
         uses: actions/github-script@v7
         with:
           script: |
-            const headSha = context.payload.workflow_run.head_sha;
-
-            const { data } = await github.rest.actions.listWorkflowRuns({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'unit_test.yml',
-              head_sha: headSha,
-              status: 'completed'
-            });
-
-            const run = data.workflow_runs.find(r => r.conclusion === 'success');
-            if (!run) core.setFailed(`No successful unit_test.yml run found for ${headSha}`);
-            core.setOutput('unit-run-id', run.id);
-
             const prs = context.payload.workflow_run.pull_requests;
-            core.setOutput('pr-number', prs && prs.length > 0 ? String(prs[0].number) : '');
+            return prs && prs.length > 0 ? String(prs[0].number) : '';
 
-      - name: Download unit test coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: unit-test-coverage
-          run-id: ${{ steps.meta.outputs.unit-run-id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: '.'
-
-      - name: Compile debug sources
-        run: ./gradlew compileDebugKotlin --stacktrace
-
-      - name: Generate Coverage Report
-        run: ./gradlew jacocoTestReport -x testDebugUnitTest --stacktrace
+      # testDebugUnitTest must run here (not just compileDebugKotlin) because
+      # enableUnitTestCoverage=true makes AGP instrument classes at compile time.
+      # The .exec IDs match only those instrumented class files, not the plain ones.
+      - name: Run unit tests and generate coverage report
+        run: ./gradlew testDebugUnitTest jacocoTestReport --stacktrace
 
       - name: Pre-upload Validation
         run: |
           echo "Checking for JaCoCo XML report..."
           find build/reports/jacoco -name "*.xml"
           if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
-            echo "Report found. Checking content..."
+            echo "Report found. Line count:"
+            wc -l build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+            echo "First 50 lines:"
             head -n 50 build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           else
             echo "Report NOT found at expected path!"
@@ -96,4 +79,4 @@ jobs:
           fail_ci_if_error: true
           verbose: true
           override_commit: ${{ github.event.workflow_run.head_sha }}
-          override_pr: ${{ steps.meta.outputs.pr-number }}
+          override_pr: ${{ steps.pr-info.outputs.result }}
