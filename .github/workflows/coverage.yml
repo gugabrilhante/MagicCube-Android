@@ -1,42 +1,25 @@
 name: Coverage
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
   workflow_run:
-    workflows: ["Build", "Unit Tests", "UI Tests"]
+    workflows: ["UI Tests"]
     types:
       - completed
 
 concurrency:
-  group: coverage-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+  group: coverage-${{ github.event.workflow_run.head_sha }}
   cancel-in-progress: true
 
 jobs:
   coverage:
-    # Trigger on push/PR, or on completion of other workflows on master.
-    if: >
-      github.event_name != 'workflow_run' || 
-      (github.event.workflow_run.head_branch == 'master' && github.event.workflow_run.conclusion == 'success')
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Debug Info
-        run: |
-          echo "Event Name: $GITHUB_EVENT_NAME"
-          echo "GITHUB_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}"
-          echo "GITHUB_REF: $GITHUB_REF"
-          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
-            echo "Triggering Workflow: ${{ github.event.workflow_run.name }}"
-            echo "Triggering Branch: ${{ github.event.workflow_run.head_branch }}"
-          fi
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
@@ -48,9 +31,49 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Download UI test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-test-coverage
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: '.'
+
+      - name: Find unit test run ID and PR number
+        id: meta
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const headSha = context.payload.workflow_run.head_sha;
+
+            const { data } = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'unit_test.yml',
+              head_sha: headSha,
+              status: 'completed'
+            });
+
+            const run = data.workflow_runs.find(r => r.conclusion === 'success');
+            if (!run) core.setFailed(`No successful unit_test.yml run found for ${headSha}`);
+            core.setOutput('unit-run-id', run.id);
+
+            const prs = context.payload.workflow_run.pull_requests;
+            core.setOutput('pr-number', prs && prs.length > 0 ? String(prs[0].number) : '');
+
+      - name: Download unit test coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-coverage
+          run-id: ${{ steps.meta.outputs.unit-run-id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: '.'
+
+      - name: Compile debug sources
+        run: ./gradlew compileDebugKotlin --stacktrace
+
       - name: Generate Coverage Report
-        # --rerun-tasks ensures the report is recalculated with the new .exec files
-        run: ./gradlew clean testDebugUnitTest jacocoTestReport --rerun-tasks --stacktrace
+        run: ./gradlew jacocoTestReport -x testDebugUnitTest --stacktrace
 
       - name: Pre-upload Validation
         run: |
@@ -72,3 +95,5 @@ jobs:
           files: build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
           fail_ci_if_error: true
           verbose: true
+          override_commit: ${{ github.event.workflow_run.head_sha }}
+          override_pr: ${{ steps.meta.outputs.pr-number }}
