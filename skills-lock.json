@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "skills": {
+    "android-create-new-feature": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/android-create-new-feature/SKILL.md",
+      "computedHash": "d620d39785294b7365ee4e86880c53bff869b76d2f146af186d297b9bbe45d1e"
+    },
+    "android-refactor-for-testability": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/android-refactor-for-testability/SKILL.md",
+      "computedHash": "e491d498686b5f92f7b1b1e68dff6fb6b3a221fd843fd5d78737ceec806ebe13"
+    },
+    "android-setup-ci-and-coverage-report": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/android-setup-ci-and-coverage-report/SKILL.md",
+      "computedHash": "4f0f6ae4be5b68bcb24eff61a9d80d0054315c3732dcf0c5f8f1a198d98befd0"
+    },
+    "guardian-android-architecture": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-android-architecture/SKILL.md",
+      "computedHash": "2edf963747610f881eedfe3e86dfe5e057ee1f2ce04fcd613c0f9c5f67ea0a3a"
+    },
+    "guardian-android-modularization": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-android-modularization/SKILL.md",
+      "computedHash": "a501c27bffce9a51acf388aa4e6cca65d003efb42c20072e8ea7babe358f5bf2"
+    },
+    "guardian-android-testability": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-android-testability/SKILL.md",
+      "computedHash": "a2b285d12a32681790c949cfd84f3031b32ca570e8df08b21982fd4e03f2d089"
+    },
+    "guardian-android-testing": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-android-testing/SKILL.md",
+      "computedHash": "8dda0da46b2651eec65ea96616eac895b25b3bffa355290eed830af9ce4e8d17"
+    },
+    "guardian-clean-code": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-clean-code/SKILL.md",
+      "computedHash": "40b1d42c380069f45c0c164c7e519d3d3f54dee7f267f7847037bb1e61599805"
+    },
+    "guardian-package-architecture": {
+      "source": "gugabrilhante/skills",
+      "sourceType": "github",
+      "skillPath": "skills/guardian-package-architecture/SKILL.md",
+      "computedHash": "3f80b93507b8bdfc6b312cdde5266c07eea23c8ad234b86b1e27902bf745622f"
+    }
+  }
+}

@@ -14,8 +14,8 @@ import gustavo.brilhante.magiccube2.grafic.RotationState
  */
 class FakeCubeGameEngine : ICubeGameEngine {
 
-    override val cubes: List<Cube> = emptyList()
-    override val cubeGrid: Array<Array<IntArray>> = Array(3) { Array(3) { IntArray(3) } }
+    override val cubes: List<Cube> = List(27) { Cube() }
+    override val cubeGrid: Array<Array<IntArray>> = Array(3) { x -> Array(3) { z -> IntArray(3) { y -> x * 9 + z * 3 + y } } }
 
     @Volatile override var rotation: RotationState = RotationState(isAnimating = false)
     override var rotatedAngle: Float = 0f

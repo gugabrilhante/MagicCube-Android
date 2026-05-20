@@ -3,3 +3,85 @@ plugins {
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.serialization) apply false
 }
+
+def jacocoExclusions = [
+    '**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*',
+    '**/*Test.class', '**/*Test$*.class',
+    'android/**/*.*', '**/Hilt_*', '**/*_HiltModules*', '**/*_Factory*',
+    '**/*_MembersInjector*', '**/DaggerHilt*', '**/*_Impl*', '**/ComposableSingletons*',
+    '**/*Preview*', '**/*Theme*', '**/*ColorKt*', '**/*TypographyKt*', '**/*TypeKt*',
+    '**/*ShapeKt*'
+]
+
+subprojects {
+    def configureJacoco = {
+        apply plugin: 'jacoco'
+        jacoco { toolVersion = '0.8.12' }
+        tasks.withType(Test).configureEach {
+            jacoco {
+                includeNoLocationClasses = true
+                excludes = jacocoExclusions + ['jdk/internal/reflect/**', 'sun/reflect/**']
+            }
+            maxHeapSize = "1024m"
+            forkEvery = 10
+            jvmArgs(
+                "-XX:+EnableDynamicAgentLoading", "-Djdk.attach.allowAttachSelf=true",
+                "-Dobjenesis.ignore.jdk.type.check=true", "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                "--add-opens=java.base/java.util=ALL-UNNAMED", "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+                "--add-opens=java.base/java.io=ALL-UNNAMED", "--add-opens=java.base/java.net=ALL-UNNAMED",
+                "--add-opens=java.base/jdk.internal.reflect=ALL-UNNAMED", "--add-exports=java.base/jdk.internal.reflect=ALL-UNNAMED",
+                "--add-opens=java.base/sun.reflect.annotation=ALL-UNNAMED"
+            )
+        }
+    }
+    plugins.withId('com.android.library') { configureJacoco() }
+    plugins.withId('com.android.application') { configureJacoco() }
+}
+
+apply plugin: 'jacoco'
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates an aggregate report from all subprojects'
+
+    dependsOn { subprojects.collect { it.tasks.matching { it.name == 'testDebugUnitTest' } } }
+
+    reports {
+        xml.required = true
+        html.required = true
+        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
+    }
+
+    classDirectories.setFrom(files({
+        subprojects.collect { proj ->
+            def buildDir = proj.layout.buildDirectory.asFile.get()
+            def asmDir = new File(buildDir, "intermediates/classes/debug/transformDebugClassesWithAsm/dirs")
+
+            // Prioritize instrumented classes (ASM) to match execution data IDs
+            if (asmDir.exists()) {
+                fileTree(dir: asmDir, excludes: jacocoExclusions)
+            } else {
+                [
+                    "intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes",
+                    "intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+                    "tmp/kotlin-classes/debug",
+                    "intermediates/kotlin-classes/debug"
+                ].collect { path ->
+                    def dir = new File(buildDir, path)
+                    dir.exists() ? fileTree(dir: dir, excludes: jacocoExclusions) : null
+                }.findAll { it != null }
+            }
+        }.flatten()
+    }))
+
+    sourceDirectories.setFrom(files({
+        subprojects.collect { proj ->
+            ["src/main/java", "src/main/kotlin"].collect { proj.file(it) }
+        }.flatten()
+    }))
+
+    executionData.setFrom(fileTree(rootDir) {
+        include '**/jacoco/*.exec', '**/outputs/unit_test_code_coverage/**/*.exec'
+        include '**/outputs/code_coverage/**/*.ec', '**/code_coverage/**/*.ec'
+    })
+}
